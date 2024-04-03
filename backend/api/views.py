@@ -1,7 +1,6 @@
 import json
 #from django.http import JsonResponse,HttpResponse
 from django.forms.models import model_to_dict
-from accounts.models import Account
 
 from rest_framework.response import Response
 
@@ -14,4 +13,6 @@ from django.http import JsonResponse
 @api_view(["POST"])
 def api_home(request,*args,**kwargs):
     serializer = AccountSerializer(data=request.data)
-    return Response(data)
+    if serializer.is_valid():
+        print(serializer.data)
+        return Response(serializer.data)
