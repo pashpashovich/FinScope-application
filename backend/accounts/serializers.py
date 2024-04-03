@@ -8,8 +8,11 @@ class AccountSerializer(serializers.ModelSerializer):
         model=Account
         fields = [
             'account_num',
+            'client_id',
             'account_type',
             'account_balance',
+            'open_date',
+            'account_activity',
             'percentage',
         ]
     

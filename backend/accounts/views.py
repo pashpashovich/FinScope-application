@@ -1,13 +1,26 @@
-from rest_framework.renderers import TemplateHTMLRenderer
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from accounts.models import Account
+from rest_framework import generics
 
 
-class AccountList(APIView):
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'account_list.html'
+from .models import Account
+from .serializers import AccountSerializer
 
-    def get(self, request):
-        queryset = Account.objects.all()
-        return Response({'account': queryset})
+
+class AccountListAPIView(generics.ListAPIView):
+    queryset = Account.objects.all()
+    serializer_class = AccountSerializer
+
+class AccountCreateAPIView(generics.CreateAPIView):
+    queryset=Account.objects.all()
+    serializer_class=AccountSerializer
+
+account_create_view = AccountCreateAPIView.as_view()
+
+
+class AccountDetailAPIView(generics.RetrieveAPIView):
+    queryset=Account.objects.all()
+    serializer_class=AccountSerializer
+
+
+
+account_detail_view = AccountDetailAPIView.as_view()
+

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceScore</title>
+    {% load static %}
+  <link rel="stylesheet" href="{% static 'auth.css' %}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+        {% load static %}
+    <script src="{% static 'auth.js' %}" defer></script>
+</head>
+
+<body>
+    <div class="finance-scope">
+        <header>
+            <div class="logo-container">
+                <img src="{% static 'images/logo.png' %}" alt="FinanceScope logo" class="logo-img" />
+                <a class="logo" href="#">
+                    <div class="logo-text">FinanceScope</div>
+                </a>
+            </div>
+            <nav class="nav-container">
+                <div class="nav-links">
+                    <a class="nav-link" href="#">Главная</a>
+                    <a class="nav-link" href="#">Информация</a>
+                    <a class="nav-link" href="#">Служба поддержки</a>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <div class="container" id="container">
+                <div class="form-container sign-up-container">
+                    <form id="signUpForm" action="#">
+                        <h1>Регистрация</h1>
+                        <input type="text" id="signUpLogin" placeholder="Логин" />
+                        <input type="email" id="signUpEmail" placeholder="Почта" />
+                        <input type="password" id="signUpPassword" placeholder="Пароль" />
+                        <button id="toSignUp">Зарегистрироваться</button>
+                    </form>
+                </div>
+                <div class="form-container sign-in-container">
+                    <form id="signInForm" action="#">
+                        <h1>Авторизация</h1>
+                        <input type="text" id="signInLogin" placeholder="Логин" />
+                        <input type="password" id="signInPassword" placeholder="Пароль" />
+                        <a href="#">Забыли пароль?</a>
+                        <button id="toSignIn">Вход</button>
+                    </form>
+                </div>
+                <div class="overlay-container">
+                    <div class="overlay">
+                        <div class="overlay-panel overlay-left">
+                            <h1>Добро пожаловать!</h1>
+                            <p>Чтобы быть рядом с финансами, пожалуйста, войдите в систему с вашей личной
+                                информацией</p>
+                            <button class="ghost" id="signIn">Авторизация</button>
+                        </div>
+                        <div class="overlay-panel overlay-right">
+                            <h1>Здравствуйте!</h1>
+                            <p>Введите свои личные данные и погрузитесь в финансы</p>
+                            <button id="signUp" class="ghost" id="signUp">Регистрация</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-top">
+                <div class="footer-logo">
+                    <div class="footer-logo-container">
+                        <img src="{% static 'images/logo.png' %}" alt="FinanceScope logo" class="logo-img">
+                        <div class="footer-logo-text">FinanceScope</div>
+                    </div>
+                    <img src="{% static 'images/socials.png' %}" alt="Social media icons" class="footer-social-icons">
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Сервисы</a>
+                    <a href="#" class="footer-link">Продукт</a>
+                    <a href="#" class="footer-link">Компания</a>
+                    <a href="#" class="footer-link">Больше</a>
+                </div>
+            </div>
+            <div class="footer-copyright">
+                © 2024 FinanceScope Все права защищены
+            </div>
+        </div>
+    </footer>
+    <script>
+        document.getElementById("toSignIn").addEventListener("click", function() {
+        event.preventDefault();
+        window.location.href = "/profile/";
+        });
+      </script>
+</body>
+
+</html>

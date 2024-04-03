@@ -1,18 +1,15 @@
-import json
-#from django.http import JsonResponse,HttpResponse
-from django.forms.models import model_to_dict
+from django.shortcuts import render
+from django.views.generic import TemplateView
 
-from rest_framework.response import Response
+class HomePageView(TemplateView):
+    template_name = 'main.html'
 
-from rest_framework.decorators import api_view
+class LoginPageView(TemplateView):
+    template_name = 'auth.html'
 
-from accounts.serializers import AccountSerializer
+class ProfilePageView(TemplateView):
+    template_name = 'profile.html'
 
-from django.http import JsonResponse
 
-@api_view(["POST"])
-def api_home(request,*args,**kwargs):
-    serializer = AccountSerializer(data=request.data)
-    if serializer.is_valid():
-        print(serializer.data)
-        return Response(serializer.data)
+class  DataPageView(TemplateView):
+    template_name = 'data.html'

@@ -1,0 +1,374 @@
+
+  .finance-scope {
+    background-color: #051139;
+    display: flex;
+    padding: 46px 0;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 400;
+  }
+
+  header {
+  display: flex;
+  max-width: 100%;
+  justify-content: space-between;
+  gap: 20px;
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .header {
+    flex-wrap: wrap;
+  }
+}
+
+.logo-container {
+  display: flex;
+  gap: 10px;
+  font-size: 36px;
+  line-height: 114%;
+}
+
+@media (max-width: 991px) {
+  .logo-container {
+    white-space: initial;
+  }
+}
+
+.logo-img {
+  width: 49px;
+  aspect-ratio: 1;
+  object-fit: auto;
+  object-position: center;
+}
+
+.logo-text {
+  margin: auto 0;
+  font-family: ABeeZee, sans-serif;
+  font-size: 100%;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  margin-left: 5%;
+  gap: 20px;
+  font-size: 24px;
+}
+
+@media (max-width: 991px) {
+  .nav-container {
+    flex-wrap: wrap;
+  }
+}
+
+.nav-links {
+  display: flex;
+  margin: auto 0;
+  padding-right: 1%;
+  gap: 19px;
+  font-family: ABeeZee, sans-serif;
+  letter-spacing: 0.36px;
+  line-height: 112.5%;
+}
+
+@media (max-width: 991px) {
+  .nav-links {
+    flex-wrap: wrap;
+  }
+}
+
+.nav-link {
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.logo {
+  text-decoration: none;
+  color: inherit;
+}
+
+.login-btn {
+  margin: 0 0 0 10%;
+  padding: 1% 10%;
+  font-family: ABeeZee, sans-serif;
+  font-size: 80%;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10%;
+  background-color: #6a65ff;
+  color: white;
+  line-height: 83%;
+}
+
+@media (max-width: 991px) {
+  .login-btn {
+    padding: 40% 50%;
+  }
+}
+
+
+  .login-btn:hover {
+    background-color: #a7a4f9;
+  }
+
+  @media (max-width: 991px) {
+    .login-btn {
+      white-space: initial;
+      padding: 0 20px;
+    }
+  }
+
+  .hero-title {
+    color: #fff;
+    text-align: center;
+    text-transform: capitalize;
+    margin-top: 2%;
+    width: 776px;
+    font: 300% ABeeZee, sans-serif;
+  }
+
+  @media (max-width: 991px) {
+    .hero-title {
+      max-width: 100%;
+      margin-top: 10%;
+      font-size: 40px;
+      line-height: 51px;
+    }
+  }
+
+  .hero-subtitle {
+    color: #ebebeb;
+    text-align: center;
+    width: 560px;
+    font: 24px/28px Poppins, sans-serif;
+  }
+
+  @media (max-width: 991px) {
+    .hero-subtitle {
+      max-width: 100%;
+      margin-top: 40px;
+    }
+  }
+
+  .hero-cta {
+    display: flex;
+    margin-top: 48px;
+    width: 548px;
+    max-width: 100%;
+    gap: 20px;
+    font-size: 24px;
+    line-height: 133%;
+  }
+
+  @media (max-width: 991px) {
+    .hero-cta {
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+  }
+
+  .register-btn {
+    font-family: ABeeZee, sans-serif;
+    font-size: 80%;
+    display: flex;
+    justify-content: center;
+    border-radius: 8px;
+    background-color: #6a65ff;
+    color: #fff;
+    white-space: nowrap;
+    padding: 16px 80px;
+  }
+
+  .register-btn:hover {
+    background-color: #a7a4f9;
+  }
+
+
+  @media (max-width: 991px) {
+    .register-btn {
+      white-space: initial;
+      padding: 0 20px;
+    }
+  }
+
+  .learn-more-btn {
+    font-family: ABeeZee, sans-serif;
+    font-size: 80%;
+    display: flex;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #fff;
+    background-color: rgba(28,28,28,0);
+    color: #ffffff;
+    flex-grow: 1;
+    width: fit-content;
+    padding: 16px 40px;
+  }
+
+  .learn-more-btn:hover {
+    background-color: white;
+    color: black;
+  }
+
+
+  @media (max-width: 991px) {
+    .learn-more-btn {
+      padding: 0 20px;
+    }
+  }
+
+  .hero-img {
+    aspect-ratio: 0.69;
+    object-fit: contain;
+    width: 333px;
+    margin-top: 112px;
+    max-width: 100%;
+  }
+
+  @media (max-width: 991px) {
+    .hero-img {
+      margin-top: 40px;
+    }
+  }
+
+  .footer {
+    background-color: #0d1849;
+    align-self: stretch;
+    display: flex;
+    margin-top: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 60px 37px;
+  }
+
+  @media (max-width: 991px) {
+    .footer {
+      max-width: 100%;
+      padding: 0 20px;
+    }
+  }
+
+  .footer-content {
+    display: flex;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 1041px;
+    flex-direction: column;
+  }
+
+  @media (max-width: 991px) {
+    .footer-content {
+      max-width: 100%;
+    }
+  }
+
+  .footer-top {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+    white-space: nowrap;
+    justify-content: space-between;
+  }
+
+  @media (max-width: 991px) {
+    .footer-top {
+      max-width: 100%;
+      flex-wrap: wrap;
+      white-space: initial;
+    }
+  }
+
+  .footer-logo {
+    display: flex;
+    flex-direction: column;
+    font-size: 36px;
+    color: #fff;
+    line-height: 69%;
+  }
+
+  @media (max-width: 991px) {
+    .footer-logo {
+      white-space: initial;
+    }
+  }
+
+  .footer-logo-container {
+    display: flex;
+    gap: 10px;
+  }
+
+  @media (max-width: 991px) {
+    .footer-logo-container {
+      white-space: initial;
+    }
+  }
+
+  .footer-logo-text {
+    font-family: ABeeZee, sans-serif;
+    flex-grow: 1;
+    flex-basis: auto;
+    margin: auto 0;
+  }
+
+  .footer-social-icons {
+    aspect-ratio: 4.76;
+    object-fit: contain;
+    width: 165px;
+    align-self: center;
+    margin-top: 15px;
+    max-width: 100%;
+  }
+
+  .footer-links {
+    align-self: start;
+    display: flex;
+    margin-top: 9px;
+    gap: 20px;
+    font-size: 28px;
+    color: #fff;
+    padding: 0 1px;
+  }
+
+  @media (max-width: 991px) {
+    .footer-links {
+      max-width: 100%;
+      flex-wrap: wrap;
+      white-space: initial;
+    }
+  }
+
+  .footer-link {
+    color:inherit;
+    text-decoration: none;
+    font-family: Manrope, sans-serif;
+    font-size: 80%;
+    flex-grow: 1;
+    flex-basis: auto;
+  }
+
+  .footer-link:hover {
+    text-decoration: underline;
+  }
+
+
+  .footer-copyright {
+    color: rgba(255, 255, 255, 0.75);
+    align-self: center;
+    margin: 4px 0 0 108px;
+    font: 20px Inter, sans-serif;
+  }
+
+  @media (max-width: 991px) {
+    .footer-copyright {
+      max-width: 100%;
+    }
+  }
+
+
