@@ -13,3 +13,6 @@ class ProfilePageView(TemplateView):
 
 class  DataPageView(TemplateView):
     template_name = 'data.html'
+
+class  AnalysePageView(TemplateView):
+    template_name = 'analyse.html'
