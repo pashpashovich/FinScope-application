@@ -34,7 +34,7 @@
   
   .main-content {
     padding: 5% 5% 5% 5%;
-    margin-left: 20%; 
+    margin-left: 15%; 
     margin-bottom: 10%;
     background-color: #030E32;
     color: white;
@@ -42,7 +42,7 @@
   
   h1 {
     font-size: 24px;
-    margin-bottom: 15px;
+    margin-bottom: 5%;
   }
   
   .info-section {
@@ -105,7 +105,7 @@
   }
 
   .choose {
-    margin-top: 15%;
+    margin-top: 10%;
     margin-bottom: 5%;
   }
 
