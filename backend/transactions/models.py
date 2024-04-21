@@ -23,7 +23,6 @@ class Transaction(models.Model):
             self.sender_account.save()
             self.recipient_account.save()
 
-
         if self.transaction_type in ['deposit']:
             self.recipient_account.account_balance += self.amount
             self.recipient_account.save()

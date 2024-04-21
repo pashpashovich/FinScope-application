@@ -76,6 +76,24 @@
 
     </div>
 </div>
+<h1>Transaction Type Distribution</h1>
+<ul>
+    {% for type, count in type_count.items %}
+        <li>{{ type }}: {{ count }}</li>
+    {% endfor %}
+</ul>
+
+<h1>Average Transaction Amount</h1>
+<p>{{ average_amount }}</p>
+
+<h1>Transaction Type Distribution</h1>
+<img src="{{ type_plot_path }}" alt="Transaction Type Distribution">
+
+<h1>Average Transaction Amount</h1>
+<p>{{ average_amount }}</p>
+
+<h1>Transaction Amount Distribution</h1>
+<img src="{{ amount_plot_path }}" alt="Transaction Amount Distribution">
 
     </main>
     <footer class="footer">

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomePageView,LoginPageView,ProfilePageView, DataPageView,AnalysePageView
+from .views import HomePageView,LoginPageView,ProfilePageView, DataPageView,AnalysePageView, transaction_analytics_view
 
 
 
@@ -9,4 +9,5 @@ urlpatterns = [
     path('profile/', ProfilePageView.as_view()),  
     path('data/', DataPageView.as_view()),  
     path('analyse/', AnalysePageView.as_view()),  
+    path('analytics/', transaction_analytics_view, name='transaction-analytics'),
 ]
