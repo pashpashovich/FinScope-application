@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'api',
     'accounts',
     'transactions',
+    'clients',
     'corsheaders',
 ]
 
