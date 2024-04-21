@@ -17,19 +17,26 @@ class Transaction(models.Model):
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
 
     def update_account_balances(self):
-        if self.transaction_type in ['transfer']:
-            self.sender_account.account_balance -= self.amount
-            self.recipient_account.account_balance +=self.amount
-            self.sender_account.save()
-            self.recipient_account.save()
+        if self.transaction_type == 'transfer':
+            self._update_transfer()
+        elif self.transaction_type == 'deposit':
+            self._update_deposit()
+        elif self.transaction_type == 'withdrawal':
+            self._update_withdrawal()
 
-        if self.transaction_type in ['deposit']:
-            self.recipient_account.account_balance += self.amount
-            self.recipient_account.save()
-        
-        if self.transaction_type in ['withdrawal']:
-            self.sender_account.account_balance -= self.amount
-            self.sender_account.save()
+    def _update_transfer(self):
+        self.sender_account.account_balance -= self.amount
+        self.recipient_account.account_balance +=self.amount
+        self.sender_account.save()
+        self.recipient_account.save()
+
+    def _update_deposit(self):
+        self.recipient_account.account_balance += self.amount
+        self.recipient_account.save()
+
+    def _update_withdrawal(self):
+        self.sender_account.account_balance -= self.amount
+        self.sender_account.save()
 
 
 @receiver(post_save, sender=Transaction)
