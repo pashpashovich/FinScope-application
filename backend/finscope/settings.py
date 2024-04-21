@@ -25,6 +25,11 @@ SECRET_KEY = 'django-insecure-2j!*1l8#2r*x6%d&1d)^(sn8=-o!hm94f%*cxk^9zne(l^2m9r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ]
+}
 ALLOWED_HOSTS = []
 
 
@@ -40,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'accounts',
+    'transactions',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'finscope.urls'
@@ -128,3 +136,8 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
