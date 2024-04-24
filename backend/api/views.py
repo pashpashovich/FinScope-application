@@ -7,6 +7,12 @@ import os
 from django.conf import settings
 from transactions.models import Transaction
 from transactions.serializers import TransactionSerializer
+from rest_framework import generics
+from rest_framework.response import Response
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
 class HomePageView(TemplateView):
     template_name = 'main.html'
@@ -74,3 +80,39 @@ def plot_transaction_amounts(transactions, plot_path):
     plt.title('Transaction Amount Distribution')
     plt.savefig(plot_path)
     plt.close()
+
+
+
+class ReportAPIView(generics.ListAPIView):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+
+    def get(self, request, *args, **kwargs):
+        transactions = self.get_queryset()
+        total_transactions = transactions.count()
+        average_amount = sum(transaction.amount for transaction in transactions) / total_transactions if total_transactions > 0 else 0
+        report_data = {
+            'total_transactions': total_transactions,
+            'average_amount': average_amount,
+        }
+        pdf_filename = "report.pdf"
+        pdf_path = f"{settings.MEDIA_ROOT}/{pdf_filename}"
+        pdf = SimpleDocTemplate(pdf_path, pagesize=letter)
+        elements = []
+        data = [["Total Transactions", "Average Amount"],
+                [report_data['total_transactions'], report_data['average_amount']]]
+        
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+
+        elements.append(table)
+        pdf.build(elements)
+        return Response({'pdf_path': pdf_path})
