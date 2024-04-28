@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'clients',
     'corsheaders',
     'invest',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -90,9 +91,13 @@ WSGI_APPLICATION = 'finscope.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "FinScope",
+        "USER": "postgres",
+        "PASSWORD": "",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -133,6 +138,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+AUTH_USER_MODEL = 'users.User'
+
 STATICFILES_DIRS = [
     'D:\DRF\py_client\Фронт\static'
 ]
@@ -146,3 +153,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
