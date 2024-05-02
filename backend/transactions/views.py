@@ -12,9 +12,12 @@ class TransactionListCreateAPIView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
 
-class TransactionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Transaction.objects.all()
+class AccountTransactionsAPIView(generics.ListAPIView):
     serializer_class = TransactionSerializer
+    def get_queryset(self):
+        account_num = self.kwargs['account_num']  
+        return Transaction.objects.filter(sender_account__account_num=account_num) | \
+               Transaction.objects.filter(recipient_account__account_num=account_num)
 
 
 

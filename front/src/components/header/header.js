@@ -1,6 +1,8 @@
 import React from 'react';
 import index from "./header.module.css";
 import logo from "./../../images/logo.png" 
+import { NavLink } from "react-router-dom";
+
 
 const Header = () => {
     return ( 
@@ -17,7 +19,9 @@ const Header = () => {
                         <a className={index.nav_link} href="#">Информация</a>
                         <a className={index.nav_link} href="#">Служба поддержки</a>
                     </div>
+                    <NavLink to="/login">
                     <button id={index.login_btn} className={index.login_btn}>Войти</button>
+                    </NavLink>
                 </nav>
             </header>
      );

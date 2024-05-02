@@ -10,3 +10,10 @@ class AccountCreateAPIView(generics.ListCreateAPIView):
 class AccountRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+
+class AccountListByClientIdAPIView(generics.ListAPIView):
+    serializer_class = AccountSerializer
+    def get_queryset(self):
+        client_id = self.kwargs['client_id']
+        queryset = Account.objects.filter(client_id=client_id)
+        return queryset

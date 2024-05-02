@@ -1,10 +1,14 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework.decorators import permission_classes
+from rest_framework import permissions
 from .serializers import UserSerializer
 from rest_framework.views import Response
 from rest_framework.exceptions import AuthenticationFailed
 from .models import User
 import jwt, datetime
+from django.http import JsonResponse
+
 
 
 
@@ -15,6 +19,7 @@ class RegisterView(APIView):
         serializer.save()
         return Response(serializer.data)
     
+@permission_classes([permissions.AllowAny])
 class LoginView(APIView):
     def post(self, request):
         email = request.data['email']
@@ -66,3 +71,11 @@ class LogoutView(APIView):
             'message':'success',
         }
         return response
+    
+def check_email(request):
+    email = request.GET.get('email')
+    if not email:
+        return JsonResponse({'error': 'Email parameter is required'}, status=400)
+
+    exists = User.objects.filter(email=email).exists()
+    return JsonResponse({'exists': exists})

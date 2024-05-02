@@ -1,0 +1,139 @@
+.footer {
+    background-color: #0d1849;
+    align-self: stretch;
+    display: flex;
+    margin-top: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 60px 37px;
+  }
+
+  @media (max-width: 991px) {
+    .footer {
+      max-width: 100%;
+      padding: 0 20px;
+    }
+  }
+
+  .footer_content {
+    display: flex;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 1041px;
+    flex-direction: column;
+  }
+
+  @media (max-width: 991px) {
+    .footer_content {
+      max-width: 100%;
+    }
+  }
+
+  .footer_top {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+    white-space: nowrap;
+    justify-content: space-between;
+  }
+
+  @media (max-width: 991px) {
+    .footer_top {
+      max-width: 100%;
+      flex-wrap: wrap;
+      white-space: initial;
+    }
+  }
+
+  .footer_logo {
+    display: flex;
+    flex-direction: column;
+    font-size: 36px;
+    color: #fff;
+    line-height: 69%;
+  }
+
+  @media (max-width: 991px) {
+    .footer_logo {
+      white-space: initial;
+    }
+  }
+
+  .footer_logo-container {
+    display: flex;
+    gap: 10px;
+  }
+
+  @media (max-width: 991px) {
+    .footer_logo_container {
+      white-space: initial;
+    }
+  }
+
+  .footer_logo_text {
+    font-family: ABeeZee, sans-serif;
+    flex-grow: 1;
+    flex-basis: auto;
+    margin: auto 0;
+  }
+
+  .footer_social_icons {
+    aspect-ratio: 4.76;
+    object-fit: contain;
+    width: 165px;
+    align-self: center;
+    margin-top: 15px;
+    max-width: 100%;
+  }
+
+  .footer_links {
+    align-self: start;
+    display: flex;
+    margin-top: 9px;
+    gap: 20px;
+    font-size: 28px;
+    color: #fff;
+    padding: 0 1px;
+  }
+
+  @media (max-width: 991px) {
+    .footer_links {
+      max-width: 100%;
+      flex-wrap: wrap;
+      white-space: initial;
+    }
+  }
+
+  .footer_link {
+    color:inherit;
+    text-decoration: none;
+    font-family: Manrope, sans-serif;
+    font-size: 80%;
+    flex-grow: 1;
+    flex-basis: auto;
+  }
+
+  .footer_link:hover {
+    text-decoration: underline;
+  }
+
+
+  .footer_copyright {
+    color: rgba(255, 255, 255, 0.75);
+    align-self: center;
+    margin: 4px 0 0 108px;
+    font: 20px Inter, sans-serif;
+  }
+
+  @media (max-width: 991px) {
+    .footer_copyright {
+      max-width: 100%;
+    }
+  }
+
+  .logo_img {
+    width: 49px;
+    aspect-ratio: 1;
+    object-fit: auto;
+    object-position: center;
+  }

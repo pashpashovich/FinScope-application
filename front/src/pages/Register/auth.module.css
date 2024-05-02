@@ -1,0 +1,29 @@
+.finance_scope {
+    background-color: #051139;
+    display: flex;
+    padding: 46px 0;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 400;
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .form_container {
+    margin-top: 20px; 
+  }
+  
+  .form_auth {
+    background-color: white; 
+    padding: 20px; 
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column; /* Разместить элементы в столбец */
+    align-items: center; /* Выравнивание содержимого по центру */
+    justify-content: center; /* Выравнивание содержимого по центру */
+  }
