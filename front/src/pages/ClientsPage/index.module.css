@@ -1,0 +1,9 @@
+
+.finance_scope {
+    background-color: #051139;
+    display: flex;
+    padding: 0 0;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 400;
+  }

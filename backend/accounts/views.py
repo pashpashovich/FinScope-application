@@ -1,19 +1,166 @@
-from rest_framework import generics
-from .models import Account
-from .serializers import AccountSerializer
+from rest_framework import generics,status
+from .models import Account, CheckingAccount, SavingsAccount, CreditAccount, SocialAccount
+from .serializers import AccountSerializer,   CheckingAccountSerializer,SavingsAccountSerializer, CreditAccountSerializer, SocialAccountSerializer
+from rest_framework.response import Response
+from .serializers import AccountSerializer, CheckingAccountSerializer, SavingsAccountSerializer, CreditAccountSerializer, SocialAccountSerializer
+from django.db.models import Value, CharField
+from django.http import JsonResponse
+from .models import Client, Account
+from rest_framework import generics, status
+from rest_framework.response import Response
+from django.http import JsonResponse
+from .models import Account, CheckingAccount, SavingsAccount, CreditAccount, SocialAccount, Client
 
 
-class AccountCreateAPIView(generics.ListCreateAPIView):
-    queryset=Account.objects.all()
-    serializer_class=AccountSerializer
+
+
+
+class AccountCreateAPIView(generics.CreateAPIView):
+    def get_serializer_class(self):
+        account_type = self.request.data.get('account_type')
+        serializer_class = {
+            'checking': CheckingAccountSerializer,
+            'savings': SavingsAccountSerializer,
+            'credit': CreditAccountSerializer,
+            'socials': SocialAccountSerializer,
+        }.get(account_type, AccountSerializer)
+        return serializer_class
+
+    def create(self, request, *args, **kwargs):
+        request_data = request.data.copy()  
+        account_type = request_data.pop('account_type', None)  
+
+        serializer = self.get_serializer(data=request_data)
+        if serializer.is_valid():
+            account = serializer.save()
+
+            if account_type:
+                account.account_type = account_type
+                account.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AccountRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
 
-class AccountListByClientIdAPIView(generics.ListAPIView):
+
+class AccountListByClientIdAPIView(generics.ListAPIView): 
     serializer_class = AccountSerializer
     def get_queryset(self):
         client_id = self.kwargs['client_id']
-        queryset = Account.objects.filter(client_id=client_id)
-        return queryset
+        return Account.objects.filter(client_id=client_id)
+
+class CheckingAccountListByClientIdAPIView(generics.ListAPIView):
+    serializer_class = CheckingAccountSerializer
+
+    def get_queryset(self):
+        client_id = self.kwargs['client_id']
+        return CheckingAccount.objects.filter(client_id=client_id)
+
+class SavingsAccountListByClientIdAPIView(generics.ListAPIView):
+    serializer_class = SavingsAccountSerializer
+
+    def get_queryset(self):
+        client_id = self.kwargs['client_id']
+        return SavingsAccount.objects.filter(client_id=client_id)
+
+class CreditAccountListByClientIdAPIView(generics.ListAPIView):
+    serializer_class = CreditAccountSerializer
+
+    def get_queryset(self):
+        client_id = self.kwargs['client_id']
+        return CreditAccount.objects.filter(client_id=client_id)
+
+class SocialAccountListByClientIdAPIView(generics.ListAPIView):
+    serializer_class = SocialAccountSerializer
+
+    def get_queryset(self):
+        client_id = self.kwargs['client_id']
+        return SocialAccount.objects.filter(client_id=client_id)
+
+class CheckingAccountListAPIView(generics.ListAPIView):
+    serializer_class = CheckingAccountSerializer
+
+    def get_queryset(self):
+        return CheckingAccount.objects.all()
+
+class SavingsAccountListAPIView(generics.ListAPIView):
+    serializer_class = SavingsAccountSerializer
+    def get_queryset(self):
+        return SavingsAccount.objects.all()
+
+class CreditAccountListAPIView(generics.ListAPIView):
+    serializer_class = CreditAccountSerializer
+    def get_queryset(self):
+        return CreditAccount.objects.all()
+
+class SocialAccountListAPIView(generics.ListAPIView):
+    serializer_class = SocialAccountSerializer
+
+    def get_queryset(self):
+        return SocialAccount.objects.all()
+
+def clients_accounts_data(request):
+    data = []
+    clients = Client.objects.all()
+    for client in clients:
+        accounts = client.accounts.all()
+        for account in accounts:
+            data.append({
+                'client_id': client.id,
+                'first_name': client.first_name,
+                'last_name': client.last_name,
+                'income': float(client.income),
+                'account_balance': float(account.account_balance),
+            })
+    return JsonResponse(data, safe=False)
+
+
+
+
+class CheckingAccountByIdAPIView(generics.RetrieveAPIView):
+    serializer_class = CheckingAccountSerializer
+    queryset = CheckingAccount.objects.all() 
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()  
+        serializer = self.get_serializer(instance)  
+        data = serializer.data
+        data['account_type'] = 'Текущий счет' 
+        return Response(data)
+
+class SocialAccountByIdAPIView(generics.RetrieveAPIView):
+    serializer_class = SocialAccountSerializer
+    queryset = SocialAccount.objects.all() 
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()  
+        serializer = self.get_serializer(instance)  
+        data = serializer.data
+        data['account_type'] = 'Социальный счет' 
+        return Response(data)
+
+class CreditAccountByIdAPIView(generics.RetrieveAPIView):
+    serializer_class = CreditAccountSerializer
+    queryset = CreditAccount.objects.all() 
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()  
+        serializer = self.get_serializer(instance)  
+        data = serializer.data
+        data['account_type'] = 'Кредитный счет' 
+        return Response(data)
+
+
+class SavingAccountByIdAPIView(generics.RetrieveAPIView):
+    serializer_class = SavingsAccountSerializer
+    queryset = SavingsAccount.objects.all() 
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()  
+        serializer = self.get_serializer(instance)  
+        data = serializer.data
+        data['account_type'] = 'Сберегательный счет' 
+        return Response(data)

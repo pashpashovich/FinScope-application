@@ -1,30 +1,49 @@
 .finance_scope {
   background-color: #051139;
   display: flex;
-  padding: 46px 0;
+  padding: 0;
   flex-direction: column;
   align-items: center;
   font-weight: 400;
+  min-height: 100vh;
+  justify-content: center; 
 }
 
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+  width: 100%;
 }
 
 .form_container {
-  margin-top: 20px; 
+  margin-top: 20px;
+  margin-bottom: 60px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
 }
+
 
 .form_auth {
-  background-color: white; 
-  padding: 20px; 
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column; /* Разместить элементы в столбец */
-  align-items: center; /* Выравнивание содержимого по центру */
-  justify-content: center; /* Выравнивание содержимого по центру */
+  width: 100%;
+  margin-top: 8px;
 }
 
+.submit {
+  margin: 24px 0 16px;
+}
+
+@media (max-width: 600px) {
+  .form_container {
+    padding: 10px;
+  }
+
+  .submit {
+    margin: 16px 0 8px;
+  }
+}

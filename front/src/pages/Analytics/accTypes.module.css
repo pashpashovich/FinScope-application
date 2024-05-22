@@ -1,4 +1,24 @@
 .accountDistributionChart {
-    width: 10px;
-    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30%;
+    height: 30%;
+}
+
+.analyticsContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.accountDistributionChart, .transactionsByDateChart {
+    width: 60%;
+    height: auto;
+}
+
+.dateFilterForm {
+    display: flex;
+    gap: 10px;
 }

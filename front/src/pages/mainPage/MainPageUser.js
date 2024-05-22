@@ -18,7 +18,7 @@ const MainPageUser = () => {
                 <span style={{ fontStyle: 'italic' }}>FinanceScope</span> поможет
             </p>
             <div className={index.hero_cta}>
-            <NavLink to="/reg">
+            <NavLink className={index.nav} to="/reg">
                 <button className={index.register_btn}>Регистрация</button>
             </NavLink>
                 <button href="#" className={index.learn_more_btn}>Узнать больше</button>

@@ -6,9 +6,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProfilePage from './pages/PersonalPage/ProfilePage';
 import ClientsPage from './pages/ClientsPage/ClientsPage';
 import ClientsAccountPage from './pages/ClientsAccountPage/ClientsAccountPage';
+import EditClietnPage from './pages/EditClient/EditClient';
 import AccountTransactionsPage from './pages/AccountTransactions/AccountTransactionsPage';
-
-
+import Analytics from "./pages/Analytics/alalytics";
+import TransactionsReport from "./pages/Reports/accountReport";
+import Menu from "./components/verticalMenu/menu";
 
 
 
@@ -21,10 +23,14 @@ function App() {
                 <Route path="/" element={<MainPageUser/>}></Route>
                 <Route path="/reg" element={<RegisterPage/>}></Route>
                 <Route path="/login" element={<LoginPage/>}></Route>
-                <Route path="/profile" element={<ProfilePage/>}></Route>
+                <Route path="/profile/:userID" element={<ProfilePage/>}></Route>
                 <Route path="/clients" element={<ClientsPage/>}></Route>
-                <Route path="/client/:clientId" element={<ClientsAccountPage />} />
+                <Route path="/login/client/:clientId" element={<ClientsAccountPage />} />
+                <Route path="/client/edit/:clientId" element={<EditClietnPage />} />
                 <Route path="/account/:accountID" element={<AccountTransactionsPage />} />
+                <Route path="/analytics" element={<Analytics/>} />
+                <Route path="/transactions-report" element={<TransactionsReport/>} />
+                <Route path="/menu" element={<Menu/>} />
             </Routes>
         </Router>
     </div>
