@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { styled } from '@mui/material/styles';
+import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
@@ -47,7 +48,7 @@ const ListItemStyled = styled(ListItem)({
   },
 });
 
-const Menu = () => {
+const Menu = ({ userID }) => {  
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
@@ -62,31 +63,31 @@ const Menu = () => {
       </DrawerHeader>
       <Divider />
       <List>
-        <ListItemStyled button>
+      <ListItemStyled button component={Link} to={`/profile/${userID}`}>
           <ListItemIcon>
             <HomeIcon style={{ color: 'white' }} />
           </ListItemIcon>
           <ListItemText primary="Профиль" />
         </ListItemStyled>
-        <ListItemStyled button>
+        <ListItemStyled button component={Link} to={`/data/${userID}`}>
           <ListItemIcon>
             <DataUsageIcon style={{ color: 'white' }} />
           </ListItemIcon>
           <ListItemText primary="Данные" />
         </ListItemStyled>
-        <ListItemStyled button>
+        <ListItemStyled button component={Link} to={`/analysis/${userID}`}>
           <ListItemIcon>
             <AssessmentIcon style={{ color: 'white' }} />
           </ListItemIcon>
           <ListItemText primary="Анализ" />
         </ListItemStyled>
-        <ListItemStyled button>
+        <ListItemStyled button component={Link} to={`/analytics/${userID}`}>
           <ListItemIcon>
             <ShowChartIcon style={{ color: 'white' }} />
           </ListItemIcon>
           <ListItemText primary="Графики" />
         </ListItemStyled>
-        <ListItemStyled button>
+        <ListItemStyled button component={Link} to="/diagrams">
           <ListItemIcon>
             <BarChartIcon style={{ color: 'white' }} />
           </ListItemIcon>

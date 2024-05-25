@@ -5,12 +5,10 @@ from users.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'role']
+        fields = ['id', 'email', 'role', 'avatar']  # Добавлено поле avatar
         extra_kwargs = {
             'email': {'validators': []},
         }
-
-
 
 class ClientSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -37,7 +35,6 @@ class ClientSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
-
 
 class BankDirectorSerializer(serializers.ModelSerializer):
     user = UserSerializer()

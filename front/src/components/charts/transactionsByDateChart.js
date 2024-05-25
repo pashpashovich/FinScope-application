@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Box, TextField, Button, Container } from '@mui/material';
 import Chart from 'chart.js/auto';
 
 const groupTransactionsByDate = (transactions) => {
@@ -18,7 +19,15 @@ const groupTransactionsByDate = (transactions) => {
     return { dates, data };
 };
 
-const TransactionsByDateChart = ({ transactions }) => {
+const TransactionsByDateChart = ({ transactions, startDate, endDate, setStartDate, setEndDate, fetchTransactionsByDate }) => {
+    const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+
+    useEffect(() => {
+        if (startDate && endDate) {
+            fetchTransactionsByDate();
+        }
+    }, [startDate, endDate]);
+
     useEffect(() => {
         const canvas = document.getElementById('transactionsByDateChart');
         const ctx = canvas.getContext('2d');
@@ -27,7 +36,7 @@ const TransactionsByDateChart = ({ transactions }) => {
             window.myDateChart.destroy();
         }
 
-        const { dates, data } = groupTransactionsByDate(transactions);
+        const { dates, data } = groupTransactionsByDate(filteredTransactions);
 
         window.myDateChart = new Chart(ctx, {
             type: 'line',
@@ -50,9 +59,42 @@ const TransactionsByDateChart = ({ transactions }) => {
                 }
             }
         });
-    }, [transactions]);
+    }, [filteredTransactions]);
 
-    return <canvas id="transactionsByDateChart"></canvas>;
+    const handleFilter = () => {
+        const filtered = transactions.filter(transaction => {
+            const date = transaction.transaction_time.split('T')[0];
+            return date >= startDate && date <= endDate;
+        });
+        setFilteredTransactions(filtered);
+    };
+
+    return (
+        <Container maxWidth="md">
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                <TextField
+                    label="Начальная дата"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ marginRight: 2 }}
+                />
+                <TextField
+                    label="Конечная дата"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ marginRight: 2 }}
+                />
+                <Button variant="contained" color="primary" onClick={handleFilter}>
+                    Применить
+                </Button>
+            </Box>
+            <canvas id="transactionsByDateChart"></canvas>
+        </Container>
+    );
 };
 
 export default TransactionsByDateChart;

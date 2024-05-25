@@ -11,6 +11,7 @@ class User(AbstractUser):
     email = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     username = None
 
     USERNAME_FIELD = 'email'

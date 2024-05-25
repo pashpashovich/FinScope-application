@@ -1,112 +1,172 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import Avatar from '@mui/material/Avatar';
-import FlagIcon from '@mui/icons-material/Flag';
-import LocationCityIcon from '@mui/icons-material/LocationCity';
-import BadgeIcon from '@mui/icons-material/Badge';
-import { styled } from '@mui/material/styles';
-import Header from "../../components/header/header";
-import Footer from "../../components/footer/footer";
-import Menu from '../../components/verticalMenu/menu';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Box, Container, Typography, Grid, Card, CardContent, Avatar, CircularProgress, AppBar, Toolbar, IconButton, CssBaseline, Input } from '@mui/material';
+import { styled } from '@mui/system';
+import axios from 'axios';
+import Menu from '../../components/verticalMenu/menu';
+import LogoutIcon from '@mui/icons-material/Logout';
 
+const apiUrl = 'http://localhost:8000/clients/financial-analyst/';
 
-const StyledListItem = styled(ListItem)(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1],
-  borderRadius: theme.shape.borderRadius,
-  '&:hover': {
-    backgroundColor: theme.palette.primary.light,
-  },
-}));
+const ProfileContainer = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  padding: 20,
+  backgroundColor: '#f5f5f5',
+  borderRadius: 8,
+  marginTop: 20,
+  width: '100%',
+});
 
-function ProfilePage() {
-  const { id } = useParams();
-  const [profileData, setProfileData] = useState(null);
+const ProfileCard = styled(Card)({
+  width: '100%',
+  maxWidth: 600,
+  marginTop: 20,
+  padding: 20,
+});
+
+const ProfileAvatar = styled(Avatar)({
+  width: 100,
+  height: 100,
+  marginBottom: 20,
+  cursor: 'pointer',
+});
+
+const HeaderAvatar = styled(Avatar)({
+  width: 40,
+  height: 40,
+});
+
+const HiddenInput = styled(Input)({
+  display: 'none',
+});
+
+const Profile = () => {
+  const { userID } = useParams();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
-    axios.get('financial-analyst/<int:pk>/')
-      .then(response => {
-        setProfileData(response.data);
+    axios.get(`${apiUrl}${userID}/`)
+      .then((response) => {
+        setUserData(response.data);
+        setLoading(false);
       })
-      .catch(error => {
-        console.error('There was an error fetching the profile data!', error);
+      .catch((error) => {
+        console.error('Error fetching user data:', error);
+        setLoading(false);
       });
-  }, []);
+  }, [userID]);
 
-  if (!profileData) {
-    return <Typography>Loading...</Typography>;
+  const handleAvatarChange = (e) => {
+    setAvatar(e.target.files[0]);
+    handleAvatarUpload(e.target.files[0]);
+  };
+
+  const handleAvatarUpload = (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    axios.post(`http://localhost:8000/clients/upload-avatar/${userID}/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    .then(response => {
+      setUserData({ ...userData, user: { ...userData.user, avatar: response.data.avatar } });
+      window.location.reload();  // Перезагрузка страницы
+    })
+    .catch(error => {
+      console.error('Error uploading avatar:', error);
+    });
+  };
+
+  if (loading) {
+    return <CircularProgress />;
   }
 
-  return (
-    <div>
-      <Menu />
-      <Box sx={{ flexGrow: 1, padding: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={9}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Профиль {profileData.username}
-            </Typography>
-            <Box sx={{ border: 1, borderRadius: 1, padding: 2, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Информация об организации
-              </Typography>
-              <List>
-                <StyledListItem>
-                  <ListItemAvatar>
-                    <Avatar>
-                      <FlagIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary="Страна:" secondary={profileData.country} />
-                </StyledListItem>
-                <StyledListItem>
-                  <ListItemAvatar>
-                    <Avatar>
-                      <LocationCityIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary="Город:" secondary={profileData.city} />
-                </StyledListItem>
-                <StyledListItem>
-                  <ListItemText primary="Название:" secondary={profileData.organization} />
-                </StyledListItem>
-              </List>
-            </Box>
-            <Box sx={{ border: 1, borderRadius: 1, padding: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Информация о сотруднике
-              </Typography>
-              <List>
-                <StyledListItem>
-                  <ListItemAvatar>
-                    <Avatar>
-                      <BadgeIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary="ФИО:" secondary={profileData.fullName} />
-                </StyledListItem>
-                <StyledListItem>
-                  <ListItemText primary="Должность:" secondary={profileData.position} />
-                </StyledListItem>
-                <StyledListItem>
-                  <ListItemText primary="Место работы:" secondary={profileData.workLocation} />
-                </StyledListItem>
-              </List>
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
-      <Footer />
-    </div>
-  );
-}
+  if (!userData) {
+    return <Typography variant="h6">Пользователь не найден</Typography>;
+  }
 
-export default ProfilePage;
+  const { user, first_name, last_name, phone_number, address, income, bank_department_number } = userData;
+  const { email, role, avatar: avatarUrl } = user;
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
+      <Menu userID={userID} />
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
+          <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="h6" noWrap component="div">
+              Профиль
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <HeaderAvatar alt={first_name} src={avatarUrl || "/static/images/avatar/1.jpg"} />
+              <IconButton onClick={() => console.log('Logout')}>
+                <LogoutIcon style={{ color: 'white' }} />
+              </IconButton>
+            </Box>
+          </Toolbar>
+        </AppBar>
+        <Toolbar />
+        <Container maxWidth="md">
+          <ProfileContainer>
+            <label htmlFor="avatar-upload">
+              <ProfileAvatar
+                alt={first_name}
+                src={avatarUrl || "/static/images/avatar/1.jpg"}
+                component="span"
+              />
+            </label>
+            <HiddenInput id="avatar-upload" type="file" onChange={handleAvatarChange} />
+            <Typography variant="h4">{`${first_name} ${last_name}`}</Typography>
+            <Typography variant="h6" color="textSecondary">{role}</Typography>
+            <ProfileCard>
+              <CardContent>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" color="textSecondary">Email</Typography>
+                    <Typography variant="body1">{email}</Typography>
+                  </Grid>
+                  {role === 'client' && (
+                    <>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle1" color="textSecondary">Доход</Typography>
+                        <Typography variant="body1">{income}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
+                        <Typography variant="body1">{phone_number}</Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle1" color="textSecondary">Адрес</Typography>
+                        <Typography variant="body1">{address}</Typography>
+                      </Grid>
+                    </>
+                  )}
+                  {role === 'bank_director' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle1" color="textSecondary">Номер отдела банка</Typography>
+                      <Typography variant="body1">{bank_department_number}</Typography>
+                    </Grid>
+                  )}
+                  {role === 'analyst' && (
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle1" color="textSecondary">Номер отдела банка</Typography>
+                      <Typography variant="body1">{bank_department_number}</Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              </CardContent>
+            </ProfileCard>
+          </ProfileContainer>
+        </Container>
+      </Box>
+    </Box>
+  );
+};
+
+export default Profile;

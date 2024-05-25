@@ -109,7 +109,7 @@ def clients_accounts_data(request):
         accounts = client.accounts.all()
         for account in accounts:
             data.append({
-                'client_id': client.id,
+                'client_id': client.user.id,
                 'first_name': client.first_name,
                 'last_name': client.last_name,
                 'income': float(client.income),

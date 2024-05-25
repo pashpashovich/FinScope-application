@@ -24,12 +24,12 @@ function App() {
                 <Route path="/reg" element={<RegisterPage/>}></Route>
                 <Route path="/login" element={<LoginPage/>}></Route>
                 <Route path="/profile/:userID" element={<ProfilePage/>}></Route>
-                <Route path="/clients" element={<ClientsPage/>}></Route>
+                <Route path="/data/:userID" element={<ClientsPage/>}></Route>
                 <Route path="/login/client/:clientId" element={<ClientsAccountPage />} />
                 <Route path="/client/edit/:clientId" element={<EditClietnPage />} />
                 <Route path="/account/:accountID" element={<AccountTransactionsPage />} />
-                <Route path="/analytics" element={<Analytics/>} />
-                <Route path="/transactions-report" element={<TransactionsReport/>} />
+                <Route path="/analytics/:userID" element={<Analytics/>} />
+                <Route path="/analysis/:userID" element={<TransactionsReport/>} />
                 <Route path="/menu" element={<Menu/>} />
             </Routes>
         </Router>
