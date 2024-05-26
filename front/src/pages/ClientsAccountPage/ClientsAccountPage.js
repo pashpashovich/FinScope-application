@@ -62,12 +62,12 @@ const ContentContainer = styled(Box)({
   boxSizing: 'border-box',
 });
 
-
 const MyToolbar = styled(Toolbar)({
-  color: '#051139', 
+  color: '#051139',
 });
 
 const ClientAccountsPage = () => {
+  const { userID } = useParams();
   const { clientId } = useParams();
   const [clientInfo, setClientInfo] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -75,13 +75,13 @@ const ClientAccountsPage = () => {
     account_num: '',
     account_type: '',
     account_balance: '',
-    currency: ' ', 
+    currency: ' ',
     open_date: new Date().toISOString().slice(0, 10),
     account_activity: true,
-    overdraft_limit: '', 
-    interest_rate: '',   
-    credit_limit: '',      
-    social_benefit_type: '', 
+    overdraft_limit: '',
+    interest_rate: '',
+    credit_limit: '',
+    social_benefit_type: '',
   });
   const [errorText, setErrorText] = useState('');
   const navigate = useNavigate();
@@ -92,15 +92,15 @@ const ClientAccountsPage = () => {
       .then(data => setClientInfo(data))
       .catch(error => console.error(error));
 
-   Promise.all([
-        fetch(`http://localhost:8000/accounts/exact/${clientId}/socials`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/exact/${clientId}/credit`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/exact/${clientId}/savings`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/exact/${clientId}/checking`).then(response => response.json())
+    Promise.all([
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/socials`).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/credit`).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/savings`).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/checking`).then(response => response.json())
     ])
-    .then(([socialsData, creditData, savingsData, checkingData]) => {
+      .then(([socialsData, creditData, savingsData, checkingData]) => {
         setAccounts([...socialsData, ...creditData, ...savingsData, ...checkingData]);
-    })
+      })
   }, [clientId]);
 
   const handleInputChange = (event) => {
@@ -126,47 +126,47 @@ const ClientAccountsPage = () => {
       .catch(error => setErrorText(error.message));
   };
 
-   const handleAddAccount = () => {
-        const { account_num, account_type, account_balance, currency, overdraft_limit, interest_rate, credit_limit, social_benefit_type } = newAccountData;
-        fetch('http://localhost:8000/accounts/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                client_id: clientId,
-                account_num: account_num,
-                account_type: account_type,
-                account_balance: account_balance,
-                currency: currency,
-                overdraft_limit: overdraft_limit,
-                interest_rate: interest_rate,
-                credit_limit: credit_limit,
-                social_benefit_type: social_benefit_type,
-                open_date: new Date().toISOString().slice(0, 10),
-                account_activity: true
-            }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                setAccounts([...accounts, data]);
-                setNewAccountData({
-                    account_num: '',
-                    account_type: '',
-                    account_balance: '',
-                    currency: '',
-                    overdraft_limit: '',
-                    interest_rate: '',
-                    credit_limit: '',
-                    social_benefit_type: ''
-                });
-                setErrorText('');
-            })
-            .catch(error => console.error('Ошибка при добавлении счета:', error));
-    };
+  const handleAddAccount = () => {
+    const { account_num, account_type, account_balance, currency, overdraft_limit, interest_rate, credit_limit, social_benefit_type } = newAccountData;
+    fetch('http://localhost:8000/accounts/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        account_num: account_num,
+        account_type: account_type,
+        account_balance: account_balance,
+        currency: currency,
+        overdraft_limit: overdraft_limit,
+        interest_rate: interest_rate,
+        credit_limit: credit_limit,
+        social_benefit_type: social_benefit_type,
+        open_date: new Date().toISOString().slice(0, 10),
+        account_activity: true
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        setAccounts([...accounts, data]);
+        setNewAccountData({
+          account_num: '',
+          account_type: '',
+          account_balance: '',
+          currency: '',
+          overdraft_limit: '',
+          interest_rate: '',
+          credit_limit: '',
+          social_benefit_type: ''
+        });
+        setErrorText('');
+      })
+      .catch(error => console.error('Ошибка при добавлении счета:', error));
+  };
 
   const handleDetailsClick = (accountId) => {
-    navigate(`/account/${accountId}`);
+    navigate(`/account/${accountId}/${userID}`);
   };
 
   const handleBack = () => {

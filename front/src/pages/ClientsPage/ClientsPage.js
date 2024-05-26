@@ -7,10 +7,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Menu from '../../components/verticalMenu/menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
+import { getCsrfToken } from '../../components/crsf/crsf';  // Make sure this path is correct
+
+// Axios default configuration
+axios.defaults.xsrfCookieName = 'csrftoken';
+axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+axios.defaults.withCredentials = true;
 
 const apiUrl = 'http://localhost:8000/clients/';
 const apiUrl2 = 'http://localhost:8000/clients/financial-analyst/';
-
 
 const FormContainer = styled(Box)({
   padding: 20,
@@ -108,11 +113,11 @@ function ClientsDataGrid() {
   };
 
   function handleDetailsClick(clientId) {
-    navigate(`/login/client/${clientId}`);
+    navigate(`/login/client/${clientId}/${userID}`);
   }
 
   function handleEditClick(user_id) {
-    navigate(`/client/edit/${user_id}`);
+    navigate(`/client/edit/${user_id}/${userID}`);
   }
 
   const handleInputChange = (event) => {
@@ -142,23 +147,16 @@ function ClientsDataGrid() {
       return;
     }
 
-    fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user: { email, role },
-        first_name,
-        last_name,
-        income: parseFloat(income),
-        phone_number,
-        address,
-      }),
+    axios.post(apiUrl, {
+      user: { email, role },
+      first_name,
+      last_name,
+      income: parseFloat(income),
+      phone_number,
+      address,
     })
-      .then((response) => response.json())
-      .then((data) => {
-        setClients([...clients, data]);
+      .then((response) => {
+        setClients([...clients, response.data]);
         setNewClientData({
           email: '',
           first_name: '',
@@ -179,6 +177,16 @@ function ClientsDataGrid() {
     return userIds.length === uniqueUserIds.size && userIds.every(id => id !== undefined);
   };
 
+  const handleLogout = () => {
+    axios.post('http://localhost:8000/api/logout', {},)
+      .then(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        navigate('/login');
+      })
+      .catch((error) => console.error('Error during logout:', error));
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -191,7 +199,7 @@ function ClientsDataGrid() {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <HeaderAvatar alt="avatar" src={avatarUrl || "/static/images/avatar/1.jpg"} />
-              <IconButton onClick={() => console.log('Logout')}>
+              <IconButton onClick={handleLogout}>
                 <LogoutIcon style={{ color: 'white' }} />
               </IconButton>
             </Box>

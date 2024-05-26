@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Grid, Card, CardContent, Avatar, CircularProgress, AppBar, Toolbar, IconButton, CssBaseline, Input } from '@mui/material';
 import { styled } from '@mui/system';
-import axios from 'axios'; 
-import Menu from '../../components/verticalMenu/menu';
+import ClientMenu from '../../components/verticalMenu/ClientMenu';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-const apiUrl = 'http://localhost:8000/clients/financial-analyst/';
+const apiUrl = 'http://localhost:8000/clients';
 
 const ProfileContainer = styled(Box)({
   display: 'flex',
@@ -42,30 +41,36 @@ const HiddenInput = styled(Input)({
   display: 'none',
 });
 
-const Profile = () => {
-  const { userID } = useParams();
+const ClientProfilePage = () => {
   const navigate = useNavigate();
+  const { userID } = useParams();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
-    axios.get(`${apiUrl}${userID}/`, {
-      withCredentials: true  
+    fetch(`${apiUrl}/${userID}/`, {
+      credentials: 'include',
     })
-    .then((response) => {
-      setUserData(response.data);
-      setLoading(false);
-    })
-    .catch((error) => {
-      console.error('Error fetching user data:', error);
-      setLoading(false);
-      if (error.response && error.response.status === 403) {
-        navigate('/forbidden'); 
-      } else if (error.response && error.response.status === 401) {
-        navigate('/login'); 
-      }
-    });
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setUserData(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching user data:', error);
+        setLoading(false);
+        if (error.response && error.response.status === 403) {
+          navigate('/forbidden');
+        } else if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
   }, [userID, navigate]);
 
   const handleAvatarChange = (e) => {
@@ -77,19 +82,23 @@ const Profile = () => {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    axios.post(`http://localhost:8000/clients/upload-avatar/${userID}/`, formData, {
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+    fetch(`http://localhost:8000/clients/upload-avatar/${userID}/`, {
+      method: 'POST',
+      body: formData,
     })
-    .then(response => {
-      setUserData({ ...userData, user: { ...userData.user, avatar: response.data.avatar } });
-      window.location.reload();  
-    })
-    .catch(error => {
-      console.error('Error uploading avatar:', error);
-    });
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setUserData({ ...userData, user: { ...userData.user, avatar: data.avatar } });
+        window.location.reload();
+      })
+      .catch(error => {
+        console.error('Error uploading avatar:', error);
+      });
   };
 
   if (loading) {
@@ -100,23 +109,13 @@ const Profile = () => {
     return <Typography variant="h6">Пользователь не найден</Typography>;
   }
 
-  const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
-  };
-
-  const { user, first_name, last_name, phone_number, address, income, bank_department_number } = userData;
+  const { user, first_name, last_name, phone_number, address, income } = userData;
   const { email, role, avatar: avatarUrl } = user;
 
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <Menu userID={userID} />
+      <ClientMenu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
           <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -125,7 +124,7 @@ const Profile = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <HeaderAvatar alt={first_name} src={avatarUrl || "/static/images/avatar/1.jpg"} />
-              <IconButton onClick={handleLogout}>
+              <IconButton onClick={() => console.log('Logout')}>
                 <LogoutIcon style={{ color: 'white' }} />
               </IconButton>
             </Box>
@@ -151,34 +150,18 @@ const Profile = () => {
                     <Typography variant="subtitle1" color="textSecondary">Email</Typography>
                     <Typography variant="body1">{email}</Typography>
                   </Grid>
-                  {role === 'client' && (
-                    <>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle1" color="textSecondary">Доход</Typography>
-                        <Typography variant="body1">{income}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
-                        <Typography variant="body1">{phone_number}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle1" color="textSecondary">Адрес</Typography>
-                        <Typography variant="body1">{address}</Typography>
-                      </Grid>
-                    </>
-                  )}
-                  {role === 'bank_director' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle1" color="textSecondary">Номер отдела банка</Typography>
-                      <Typography variant="body1">{bank_department_number}</Typography>
-                    </Grid>
-                  )}
-                  {role === 'analyst' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle1" color="textSecondary">Номер отдела банка</Typography>
-                      <Typography variant="body1">{bank_department_number}</Typography>
-                    </Grid>
-                  )}
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle1" color="textSecondary">Доход</Typography>
+                    <Typography variant="body1">{income}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
+                    <Typography variant="body1">{phone_number}</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" color="textSecondary">Адрес</Typography>
+                    <Typography variant="body1">{address}</Typography>
+                  </Grid>
                 </Grid>
               </CardContent>
             </ProfileCard>
@@ -189,4 +172,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default ClientProfilePage;

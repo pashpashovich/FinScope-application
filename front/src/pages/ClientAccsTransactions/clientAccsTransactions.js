@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { styled } from '@mui/material/styles';
-import Menu from '../../components/verticalMenu/menu';
+import ClientMenu from '../../components/verticalMenu/ClientMenu';
 
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -43,6 +43,7 @@ const FormContainer = styled(Paper)({
 });
 
 const AccountTransactionsPage = () => {
+    const { userID } = useParams();
     const { accountID } = useParams();
     const [accountInfo, setAccountInfo] = useState(null);
     const [transactions, setTransactions] = useState([]);
@@ -50,7 +51,7 @@ const AccountTransactionsPage = () => {
         sender_account: '',
         recipient_account: '',
         amount: '',
-        transaction_type: 'deposit'
+        transaction_type: 'withdrawal'
     });
     const navigate = useNavigate();
     const theme = useTheme();
@@ -74,6 +75,7 @@ const AccountTransactionsPage = () => {
         .then(data => setTransactions(data))
         .catch(error => console.error(error));
     }, [accountID]);
+
 
     const handleBack = () => {
         navigate(-1);
@@ -118,24 +120,15 @@ const AccountTransactionsPage = () => {
     };
 
     const handleAddTransaction = () => {
-        const { amount, sender_account, transaction_type, recipient_account } = newTransactionData;
+        const { amount, transaction_type, recipient_account } = newTransactionData;
         const transactionData = {
-            sender_account: '',
+            sender_account: accountID,
             recipient_account: '',
             amount: amount,
             transaction_type: transaction_type,
         };
         if (transaction_type === 'transfer') {
-            transactionData.sender_account = accountID;
             transactionData.recipient_account = recipient_account;
-        }
-        if (transaction_type === 'deposit') {
-            transactionData.sender_account = '';
-            transactionData.recipient_account = accountID;
-        }
-
-        if (transaction_type === 'withdrawal') {
-            transactionData.sender_account = accountID;
         }
 
         axios.post('http://localhost:8000/transactions/', transactionData)
@@ -145,21 +138,16 @@ const AccountTransactionsPage = () => {
                     sender_account: '',
                     recipient_account: '',
                     amount: '',
-                    transaction_type: 'deposit'
+                    transaction_type: 'withdrawal'
                 });
-                Promise.any([
-                    axios.get(`${apiUrl}/${accountID}/socials`).then(response => response.data),
-                    axios.get(`${apiUrl}/${accountID}/credit`).then(response => response.data),
-                    axios.get(`${apiUrl}/${accountID}/savings`).then(response => response.data),
-                    axios.get(`${apiUrl}/${accountID}/checking`).then(response => response.data)
-                ])
             })
             .catch(error => console.error('Ошибка при добавлении транзакции:', error));
+            window.location.reload();  
     };
 
     return (
         <div>
-            <Menu />
+            <ClientMenu userID={userID} />
             <FormContainer elevation={3}>
                 <Box display="flex" alignItems="center" marginBottom={2}>
                     <IconButton onClick={handleBack}>
@@ -225,7 +213,6 @@ const AccountTransactionsPage = () => {
                             onChange={handleInputChange}
                             label="Тип транзакции"
                         >
-                            <MenuItem value="deposit">Начисление</MenuItem>
                             <MenuItem value="withdrawal">Снятие</MenuItem>
                             <MenuItem value="transfer">Перевод</MenuItem>
                         </Select>

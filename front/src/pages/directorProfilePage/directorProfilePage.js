@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Grid, Card, CardContent, Avatar, CircularProgress, AppBar, Toolbar, IconButton, CssBaseline, Input } from '@mui/material';
 import { styled } from '@mui/system';
-import axios from 'axios'; 
-import Menu from '../../components/verticalMenu/menu';
+import axios from 'axios';  
+import BankDirectorMenu from '../../components/verticalMenu/directorMenu';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-const apiUrl = 'http://localhost:8000/clients/financial-analyst/';
+const apiUrl = 'http://localhost:8000/clients/bank-director/';
 
 const ProfileContainer = styled(Box)({
   display: 'flex',
@@ -42,7 +42,7 @@ const HiddenInput = styled(Input)({
   display: 'none',
 });
 
-const Profile = () => {
+const DirectorProfilePage = () => {
   const { userID } = useParams();
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
@@ -100,6 +100,9 @@ const Profile = () => {
     return <Typography variant="h6">Пользователь не найден</Typography>;
   }
 
+  const { user, first_name, last_name, phone_number } = userData;
+  const { email, role, avatar: avatarUrl } = user;
+
   const handleLogout = () => {
     axios.post('http://localhost:8000/api/logout', {},)
       .then(() => {
@@ -110,15 +113,12 @@ const Profile = () => {
       .catch((error) => console.error('Error during logout:', error));
   };
 
-  const { user, first_name, last_name, phone_number, address, income, bank_department_number } = userData;
-  const { email, role, avatar: avatarUrl } = user;
-
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <Menu userID={userID} />
+      <BankDirectorMenu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
           <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="h6" noWrap component="div">
               Профиль
@@ -151,34 +151,10 @@ const Profile = () => {
                     <Typography variant="subtitle1" color="textSecondary">Email</Typography>
                     <Typography variant="body1">{email}</Typography>
                   </Grid>
-                  {role === 'client' && (
-                    <>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle1" color="textSecondary">Доход</Typography>
-                        <Typography variant="body1">{income}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
-                        <Typography variant="body1">{phone_number}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle1" color="textSecondary">Адрес</Typography>
-                        <Typography variant="body1">{address}</Typography>
-                      </Grid>
-                    </>
-                  )}
-                  {role === 'bank_director' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle1" color="textSecondary">Номер отдела банка</Typography>
-                      <Typography variant="body1">{bank_department_number}</Typography>
-                    </Grid>
-                  )}
-                  {role === 'analyst' && (
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle1" color="textSecondary">Номер отдела банка</Typography>
-                      <Typography variant="body1">{bank_department_number}</Typography>
-                    </Grid>
-                  )}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
+                    <Typography variant="body1">{phone_number}</Typography>
+                  </Grid>
                 </Grid>
               </CardContent>
             </ProfileCard>
@@ -189,4 +165,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default DirectorProfilePage;

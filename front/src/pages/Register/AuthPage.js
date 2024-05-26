@@ -54,17 +54,21 @@ const SignUp = () => {
     }
 
     try {
-      const emailCheckResponse = await axios.get(`http://localhost:8000/api/check-email?email=${email}`);
+      const emailCheckResponse = await axios.get(`http://localhost:8000/api/check-email?email=${email}`, {withCredentials: true});
       if (emailCheckResponse.data.exists) {
         setEmailError('This email is already registered');
         return;
       }
 
       const response = await axios.post('http://localhost:8000/api/register', {
-        name,
-        email,
-        password
-      });
+    name,
+    email,
+    password
+  },
+  {
+    withCredentials: true
+  }
+);
       
       console.log('Successfully registered:', response.data);
       navigate('/login');

@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import { Button, TextField, IconButton, Box, Typography, Paper, Avatar } from '@material-ui/core';
-import { Visibility, VisibilityOff, LockOutlined } from '@material-ui/icons';
-import { styled } from '@material-ui/core/styles';
+import { Button, TextField, IconButton, Box, Typography, Paper, Avatar } from '@mui/material';
+import { Visibility, VisibilityOff, LockOutlined } from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import index from './login.module.css';
-import Header from "../../components/headerReg/headerReg"
-import Footer from "../../components/footer/footer"
-import { jwtDecode } from 'jwt-decode';
+import Header from "../../components/headerReg/headerReg";
+import Footer from "../../components/footer/footer";
 import { useNavigate } from 'react-router-dom';
-
-
-
 
 const MyAvatar = styled(Avatar)({
   backgroundColor: '#6a65ff'
@@ -22,6 +18,8 @@ const MyButton = styled(Button)({
   color: "white"
 });
 
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = 'http://localhost:8000';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -36,21 +34,32 @@ const SignIn = () => {
         email,
         password,
       });
-      localStorage.setItem('token', response.data.jwt);
-      const decodedToken = jwtDecode(response.data.jwt);
-      const id = response.data.id
-      const role = decodedToken.role;
-      if (role === 'analyst') {
-        navigate(`/profile/${response.data.id}`);
-      } else if (role === 'client') {
-        navigate(`client/${response.data.id}`);
-      } else if (role === 'director') {
-        navigate('/director-dashboard');
+
+      const { id, role } = response.data;
+      localStorage.setItem('userRole', role);
+      console.log(role);
+
+      switch (role) {
+        case 'analyst':
+          navigate(`/profile/${id}`);
+          break;
+        case 'client':
+          navigate(`/profileCl/${id}`);
+          break;
+        case 'director':
+          navigate(`/profileDir/${id}`);
+          break;
+        default:
+          setErrorMessage('Неизвестная роль пользователя');
+      }
+    } catch (error) {
+      console.log(error.response.status)
+      if (error.response.status === 403) {
+        setErrorMessage('Ваш аккаунт деактивирован. Пожалуйста, свяжитесь с поддержкой.');
       } else {
-        setErrorMessage('Неизвестная роль пользователя');
-      }    } catch (error) {
-      console.error('Ошибка при авторизации:', error);
-      setErrorMessage('Неверный логин или пароль');
+        console.error('Ошибка при авторизации:', error);
+        setErrorMessage('Неверный логин или пароль');
+      }
     }
   };
 
@@ -58,7 +67,7 @@ const SignIn = () => {
     <div className={index.finance_scope}>
       <Header />
       <Box className={index.container}>
-        <Paper color='red' className={index.form_container} elevation={3}>
+        <Paper className={index.form_container} elevation={3}>
           <MyAvatar>
             <LockOutlined />
           </MyAvatar>
@@ -99,7 +108,6 @@ const SignIn = () => {
               }}
             />
             {errorMessage && <Typography color="error">{errorMessage}</Typography>}
-
             <MyButton
               fullWidth
               variant="contained"

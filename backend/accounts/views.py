@@ -10,12 +10,15 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Account, CheckingAccount, SavingsAccount, CreditAccount, SocialAccount, Client
+from rest_framework import permissions, status
 
 
 
 
 
 class AccountCreateAPIView(generics.CreateAPIView):
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     def get_serializer_class(self):
         account_type = self.request.data.get('account_type')
         serializer_class = {
@@ -44,16 +47,22 @@ class AccountCreateAPIView(generics.CreateAPIView):
 class AccountRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
 
 class AccountListByClientIdAPIView(generics.ListAPIView): 
     serializer_class = AccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     def get_queryset(self):
         client_id = self.kwargs['client_id']
         return Account.objects.filter(client_id=client_id)
 
 class CheckingAccountListByClientIdAPIView(generics.ListAPIView):
     serializer_class = CheckingAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
     def get_queryset(self):
         client_id = self.kwargs['client_id']
@@ -61,6 +70,8 @@ class CheckingAccountListByClientIdAPIView(generics.ListAPIView):
 
 class SavingsAccountListByClientIdAPIView(generics.ListAPIView):
     serializer_class = SavingsAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
     def get_queryset(self):
         client_id = self.kwargs['client_id']
@@ -68,6 +79,8 @@ class SavingsAccountListByClientIdAPIView(generics.ListAPIView):
 
 class CreditAccountListByClientIdAPIView(generics.ListAPIView):
     serializer_class = CreditAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
     def get_queryset(self):
         client_id = self.kwargs['client_id']
@@ -75,6 +88,8 @@ class CreditAccountListByClientIdAPIView(generics.ListAPIView):
 
 class SocialAccountListByClientIdAPIView(generics.ListAPIView):
     serializer_class = SocialAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
     def get_queryset(self):
         client_id = self.kwargs['client_id']
@@ -82,22 +97,30 @@ class SocialAccountListByClientIdAPIView(generics.ListAPIView):
 
 class CheckingAccountListAPIView(generics.ListAPIView):
     serializer_class = CheckingAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
     def get_queryset(self):
         return CheckingAccount.objects.all()
 
 class SavingsAccountListAPIView(generics.ListAPIView):
     serializer_class = SavingsAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     def get_queryset(self):
         return SavingsAccount.objects.all()
 
 class CreditAccountListAPIView(generics.ListAPIView):
     serializer_class = CreditAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     def get_queryset(self):
         return CreditAccount.objects.all()
 
 class SocialAccountListAPIView(generics.ListAPIView):
     serializer_class = SocialAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
 
     def get_queryset(self):
         return SocialAccount.objects.all()
@@ -122,6 +145,8 @@ def clients_accounts_data(request):
 
 class CheckingAccountByIdAPIView(generics.RetrieveAPIView):
     serializer_class = CheckingAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     queryset = CheckingAccount.objects.all() 
 
     def retrieve(self, request, *args, **kwargs):
@@ -133,6 +158,8 @@ class CheckingAccountByIdAPIView(generics.RetrieveAPIView):
 
 class SocialAccountByIdAPIView(generics.RetrieveAPIView):
     serializer_class = SocialAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     queryset = SocialAccount.objects.all() 
 
     def retrieve(self, request, *args, **kwargs):
@@ -144,6 +171,8 @@ class SocialAccountByIdAPIView(generics.RetrieveAPIView):
 
 class CreditAccountByIdAPIView(generics.RetrieveAPIView):
     serializer_class = CreditAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     queryset = CreditAccount.objects.all() 
 
     def retrieve(self, request, *args, **kwargs):
@@ -156,6 +185,8 @@ class CreditAccountByIdAPIView(generics.RetrieveAPIView):
 
 class SavingAccountByIdAPIView(generics.RetrieveAPIView):
     serializer_class = SavingsAccountSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     queryset = SavingsAccount.objects.all() 
 
     def retrieve(self, request, *args, **kwargs):

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Button, Box, AppBar, Toolbar, IconButton, Typography, CssBaseline } from '@mui/material';
+import { Button, Box, AppBar, Toolbar, IconButton, Typography, CssBaseline, Avatar } from '@mui/material';
 import { styled } from '@mui/system';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useNavigate } from 'react-router-dom';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useNavigate, useParams } from 'react-router-dom';
 import Menu from '../../components/verticalMenu/menu';
-import { useParams } from 'react-router-dom';
-
+import axios from 'axios';
 
 const apiUrl = 'http://localhost:8000/transactions/';
 const pdfUrl = 'http://localhost:8000/transactions/generate-pdf/';
+const profileUrl = 'http://localhost:8000/api/';
 
 const StyledBox = styled(Box)({
   display: 'flex',
@@ -25,11 +26,15 @@ const Header = styled(AppBar)({
   backgroundColor: '#030E32',
 });
 
+const MyToolbar = styled(Toolbar)({
+  color: '#051139', 
+});
+
 const TransactionsReport = () => {
   const { userID } = useParams();
-  console.log(userID)
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
+  const [userData, setUserData] = useState(null);
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -45,7 +50,17 @@ const TransactionsReport = () => {
       .then(response => response.json())
       .then(data => setTransactions(data))
       .catch(error => console.error('Ошибка при загрузке транзакций:', error));
-  }, []);
+      
+    axios.get(`${profileUrl}${userID}/`, {
+      withCredentials: true  
+    })
+    .then((response) => {
+      setUserData(response.data);
+    })
+    .catch((error) => {
+      console.error('Error fetching user data:', error);
+    });
+  }, [userID]);
 
   const downloadPDF = () => {
     fetch(pdfUrl)
@@ -62,20 +77,44 @@ const TransactionsReport = () => {
       .catch(error => console.error('Ошибка при загрузке PDF:', error));
   };
 
+  const handleLogout = () => {
+    axios.post('http://localhost:8000/api/logout', {})
+      .then(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        navigate('/login');
+      })
+      .catch((error) => console.error('Error during logout:', error));
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <Menu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Header position="fixed">
-          <Toolbar>
-            <IconButton edge="start" color="inherit" onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div">
+          <MyToolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography style={{color:'white'}} variant="h6" noWrap component="div">
               Анализ
             </Typography>
-          </Toolbar>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <IconButton edge="start" color="inherit" onClick={() => navigate(-1)} sx={{ mr: 2 }}>
+                <ArrowBackIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {userData && (
+                <Avatar
+                  alt={userData.first_name}
+                  src={userData.avatar || "/static/images/avatar/1.jpg"}
+                  sx={{ width: 40, height: 40, mr: 2 }}
+                />
+              )}
+              <IconButton onClick={handleLogout}>
+                <LogoutIcon style={{ color: 'white' }} />
+              </IconButton>
+            </Box>
+          </MyToolbar>
         </Header>
         <Toolbar />
         <StyledBox>

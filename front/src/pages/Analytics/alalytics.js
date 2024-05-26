@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, AppBar, Toolbar, IconButton, Typography, CssBaseline, MenuItem, Select, FormControl, InputLabel, Container } from '@mui/material';
+import { Box, AppBar, Avatar, Toolbar, IconButton, Typography, CssBaseline, MenuItem, Select, FormControl, InputLabel, Container } from '@mui/material';
 import { styled } from '@mui/system';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,6 +7,10 @@ import Menu from '../../components/verticalMenu/menu';
 import AccountDistributionChart from '../../components/charts/accTypes';
 import TransactionsByDateChart from '../../components/charts/transactionsByDateChart';
 import ClientsAccountsChart from "../../components/charts/clientsAccountsChart";
+import LogoutIcon from '@mui/icons-material/Logout';
+import axios from 'axios';
+
+const apiUrl2 = 'http://localhost:8000/clients/financial-analyst/';
 
 const Header = styled(AppBar)({
   zIndex: 1300,
@@ -22,7 +26,13 @@ const StyledBox = styled(Box)({
   backgroundColor: '#f5f5f5',
 });
 
+const HeaderAvatar = styled(Avatar)({
+  width: 40,
+  height: 40,
+});
+
 const Analytics = () => {
+  const [avatarUrl, setAvatarUrl] = useState('');
   const { userID } = useParams();
   const navigate = useNavigate();
   const [chartType, setChartType] = useState('');
@@ -49,6 +59,11 @@ const Analytics = () => {
           setDataLoaded(true);
         });
     }
+    axios.get(`${apiUrl2}${userID}/`)
+    .then((response) => {
+      setAvatarUrl(response.data.user.avatar);
+    })
+    .catch((error) => console.error('Error fetching avatar:', error));
   }, [dataLoaded]);
 
   useEffect(() => {
@@ -90,21 +105,34 @@ const Analytics = () => {
     }
   };
 
+  const handleLogout = () => {
+    axios.post('http://localhost:8000/api/logout', {},)
+      .then(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        navigate('/login');
+      })
+      .catch((error) => console.error('Error during logout:', error));
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <Menu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Header position="fixed">
-          <Toolbar>
-            <IconButton edge="start" color="inherit" onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-              <ArrowBackIcon />
-            </IconButton>
+      <AppBar style={{ background: '#030E32' }} position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+          <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="h6" noWrap component="div">
               Графики
             </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <HeaderAvatar alt="avatar" src={avatarUrl || "/static/images/avatar/1.jpg"} />
+              <IconButton onClick={handleLogout}>
+                <LogoutIcon style={{ color: 'white' }} />
+              </IconButton>
+            </Box>
           </Toolbar>
-        </Header>
+        </AppBar>
         <Toolbar />
         <StyledBox>
           <Container maxWidth="md">

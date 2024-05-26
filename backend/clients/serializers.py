@@ -5,7 +5,7 @@ from users.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'role', 'avatar']  # Добавлено поле avatar
+        fields = ['id', 'email', 'role', 'avatar']  
         extra_kwargs = {
             'email': {'validators': []},
         }
@@ -41,7 +41,7 @@ class BankDirectorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BankDirector
-        fields = ['user_id', 'user', 'first_name', 'last_name', 'phone_number', 'bank_department_number']
+        fields = ['user_id', 'user', 'first_name', 'last_name', 'phone_number']
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', None)
@@ -75,3 +75,4 @@ class FinancialAnalystSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+

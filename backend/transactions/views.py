@@ -32,9 +32,13 @@ import requests
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg') 
+from rest_framework import permissions, status
+
 
 
 class TransactionsByDateRangeAPIView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     def get(self, request, *args, **kwargs):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
@@ -50,9 +54,14 @@ class TransactionsByDateRangeAPIView(APIView):
 class TransactionListCreateAPIView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
+    
     
 
 class AccountTransactionsAPIView(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
     serializer_class = TransactionSerializer
     def get_queryset(self):
         account_num = self.kwargs['account_num']  
