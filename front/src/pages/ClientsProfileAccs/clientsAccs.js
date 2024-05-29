@@ -1,39 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, ListItemIcon, Button, ListItemSecondaryAction, IconButton, Divider, Paper, Box, AppBar, Toolbar, CssBaseline, Drawer, Avatar } from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Button, ListItemSecondaryAction, IconButton, Divider, Paper, Box, AppBar, Toolbar, CssBaseline, Drawer, Avatar } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import MenuIcon from '@mui/icons-material/Menu';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { styled } from '@mui/material/styles';
 import Menu from '../../components/verticalMenu/ClientMenu';
+import axios from 'axios';
 
 const drawerWidth = 240;
 
 const MenuContainer = styled(Box)({
   display: 'flex',
-});
-
-const DrawerHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(2),
-  backgroundColor: '#030E32',
-  color: 'white',
-  justifyContent: 'center',
-  fontWeight: 'bold',
-}));
-
-const StyledDrawer = styled(Drawer)({
-  '.MuiDrawer-paper': {
-    backgroundColor: '#030E32',
-    color: 'white',
-    width: drawerWidth,
-  },
-});
-
-const ListItemStyled = styled(ListItem)({
-  '&:hover': {
-    backgroundColor: '#3A3A55',
-  },
 });
 
 const ContentContainer = styled(Box)({
@@ -83,49 +60,61 @@ const ClientProfilePage = () => {
     navigate(-1);
   };
 
-  
+  const handleLogout = () => {
+    axios.post('http://localhost:8000/api/logout', {},)
+      .then(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        navigate('/login');
+      })
+      .catch((error) => console.error('Error during logout:', error));
+  };
 
   return (
     <MenuContainer>
       <CssBaseline />
-      <AppBar style={{ background: '#030E32' }} position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <MyToolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap component="div">
             Клиенты
           </Typography>
-        </MyToolbar>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {clientInfo && (
+              <Avatar
+                alt={clientInfo.first_name}
+                src={clientInfo.user.avatar || "/static/images/avatar/1.jpg"}
+                sx={{ width: 40, height: 40 }}
+              />
+            )}
+            <IconButton onClick={handleLogout}>
+              <LogoutIcon style={{ color: 'white' }} />
+            </IconButton>
+          </Box>
+        </Toolbar>
       </AppBar>
-      <StyledDrawer
+      <Drawer
         variant="permanent"
         sx={{
           display: { xs: 'none', sm: 'block' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundColor: '#030E32', color: 'white' },
         }}
         open
       >
-        <Menu  userID={userID} />
-      </StyledDrawer>
+        <Menu userID={userID} />
+      </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}>
         <Toolbar />
         <ContentContainer>
-          <Paper elevation={3} style={{ padding: 20, width: '100%' }}>
-            <IconButton onClick={handleBack} style={{ marginBottom: 10 }}>
+          <Paper elevation={3} sx={{ padding: 2, width: '100%' }}>
+            <IconButton onClick={handleBack} sx={{ marginBottom: 1 }}>
               <ArrowBackIcon /> Назад
             </IconButton>
             {clientInfo && (
-              <div style={{ marginBottom: 20, textAlign: 'center' }}>
+              <Box sx={{ marginBottom: 2, textAlign: 'center' }}>
                 <Avatar
                   alt={clientInfo.first_name}
                   src={clientInfo.user.avatar || "/static/images/avatar/1.jpg"}
-                  style={{ width: 120, height: 120, margin: '0 auto', marginBottom: 20 }}
+                  sx={{ width: 120, height: 120, margin: '0 auto', marginBottom: 2 }}
                 />
                 <Typography variant="h5" gutterBottom>
                   {clientInfo.first_name} {clientInfo.last_name}
@@ -139,14 +128,14 @@ const ClientProfilePage = () => {
                 <Typography variant="body1" gutterBottom>
                   Адрес: {clientInfo.address}
                 </Typography>
-              </div>
+              </Box>
             )}
             <Typography variant="h5" gutterBottom>
               Счета клиента
             </Typography>
             <List>
               {Array.isArray(accounts) && accounts.map(account => (
-                <div key={account.account_num}>
+                <Box key={account.account_num}>
                   <ListItem>
                     <ListItemText
                       primary={account.account_type}
@@ -157,7 +146,7 @@ const ClientProfilePage = () => {
                     </ListItemSecondaryAction>
                   </ListItem>
                   <Divider />
-                </div>
+                </Box>
               ))}
             </List>
           </Paper>

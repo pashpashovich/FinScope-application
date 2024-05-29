@@ -4,6 +4,8 @@ import { Box, Container, Typography, Grid, Card, CardContent, Avatar, CircularPr
 import { styled } from '@mui/system';
 import ClientMenu from '../../components/verticalMenu/ClientMenu';
 import LogoutIcon from '@mui/icons-material/Logout';
+import axios from 'axios';  
+
 
 const apiUrl = 'http://localhost:8000/clients';
 
@@ -109,6 +111,17 @@ const ClientProfilePage = () => {
     return <Typography variant="h6">Пользователь не найден</Typography>;
   }
 
+
+  const handleLogout = () => {
+    axios.post('http://localhost:8000/api/logout', {},)
+      .then(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        navigate('/login');
+      })
+      .catch((error) => console.error('Error during logout:', error));
+  };
+
   const { user, first_name, last_name, phone_number, address, income } = userData;
   const { email, role, avatar: avatarUrl } = user;
 
@@ -124,7 +137,7 @@ const ClientProfilePage = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <HeaderAvatar alt={first_name} src={avatarUrl || "/static/images/avatar/1.jpg"} />
-              <IconButton onClick={() => console.log('Logout')}>
+              <IconButton onClick={handleLogout}>
                 <LogoutIcon style={{ color: 'white' }} />
               </IconButton>
             </Box>

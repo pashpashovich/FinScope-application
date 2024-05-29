@@ -46,6 +46,8 @@ const AccountTransactionsPage = () => {
     const { accountID } = useParams();
     const [accountInfo, setAccountInfo] = useState(null);
     const [transactions, setTransactions] = useState([]);
+    const [convertedBalance, setConvertedBalance] = useState(null);
+    const [selectedCurrency, setSelectedCurrency] = useState('USD'); // Начальная валюта
     const [newTransactionData, setNewTransactionData] = useState({
         sender_account: '',
         recipient_account: '',
@@ -66,6 +68,7 @@ const AccountTransactionsPage = () => {
         ])
         .then((data) => {
             setAccountInfo(data);
+            fetchConvertedBalance(data.account_balance.toString(), data.currency, selectedCurrency);
         })
         .catch(error => console.error(error));
 
@@ -75,6 +78,23 @@ const AccountTransactionsPage = () => {
         .catch(error => console.error(error));
     }, [accountID]);
 
+    const fetchConvertedBalance = async (balance, fromCurrency, toCurrency) => {
+        try {
+            const response = await axios.get(`http://localhost:8000/accounts/convert/${balance}/${fromCurrency}/${toCurrency}/`);
+            setConvertedBalance(response.data[toCurrency]);
+        } catch (error) {
+            console.error('Error fetching converted balance:', error);
+        }
+    };
+
+    const handleCurrencyChange = (event) => {
+        const newCurrency = event.target.value;
+        setSelectedCurrency(newCurrency);
+        if (accountInfo) {
+            fetchConvertedBalance(accountInfo.account_balance, accountInfo.currency, newCurrency);
+        }
+    };
+
     const handleBack = () => {
         navigate(-1);
     };
@@ -82,39 +102,6 @@ const AccountTransactionsPage = () => {
     const handleInputChange = (event) => {
         const { name, value } = event.target;
         setNewTransactionData({ ...newTransactionData, [name]: value });
-    };
-
-    const renderAdditionalAccountInfo = () => {
-        if (!accountInfo) return null;
-
-        switch (accountInfo.account_type) {
-            case 'Текущий счет':
-                return (
-                    <Typography variant="body1" gutterBottom>
-                        Лимит овердрафта: {accountInfo.overdraft_limit} BYN
-                    </Typography>
-                );
-            case 'Сберегательный счет':
-                return (
-                    <Typography variant="body1" gutterBottom>
-                        Процентная ставка: {accountInfo.interest_rate}%
-                    </Typography>
-                );
-            case 'Кредитный счет':
-                return (
-                    <Typography variant="body1" gutterBottom>
-                        Кредитный лимит: {accountInfo.credit_limit} BYN
-                    </Typography>
-                );
-            case 'Социальный счет':
-                return (
-                    <Typography variant="body1" gutterBottom>
-                        Социальные выплаты: {accountInfo.social_payments ? "Включены" : "Отключены"}
-                    </Typography>
-                );
-            default:
-                return null;
-        }
     };
 
     const handleAddTransaction = () => {
@@ -157,6 +144,39 @@ const AccountTransactionsPage = () => {
             .catch(error => console.error('Ошибка при добавлении транзакции:', error));
     };
 
+    const renderAdditionalAccountInfo = () => {
+        if (!accountInfo) return null;
+
+        switch (accountInfo.account_type) {
+            case 'Текущий счет':
+                return (
+                    <Typography variant="body1" gutterBottom>
+                        Лимит овердрафта: {accountInfo.overdraft_limit} BYN
+                    </Typography>
+                );
+            case 'Сберегательный счет':
+                return (
+                    <Typography variant="body1" gutterBottom>
+                        Процентная ставка: {accountInfo.interest_rate}%
+                    </Typography>
+                );
+            case 'Кредитный счет':
+                return (
+                    <Typography variant="body1" gutterBottom>
+                        Кредитный лимит: {accountInfo.credit_limit} BYN
+                    </Typography>
+                );
+            case 'Социальный счет':
+                return (
+                    <Typography variant="body1" gutterBottom>
+                        Социальные выплаты: {accountInfo.social_payments ? "Включены" : "Отключены"}
+                    </Typography>
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
         <div>
             <Menu />
@@ -179,12 +199,26 @@ const AccountTransactionsPage = () => {
                             Тип счета: {accountInfo.account_type}
                         </Typography>
                         <Typography variant="body1" gutterBottom>
-                            Баланс: {accountInfo.account_balance} {accountInfo.currency}
+                            Баланс: {convertedBalance ? convertedBalance.toFixed(2) : accountInfo.account_balance} {selectedCurrency}
                         </Typography>
                         <Typography variant="body1" gutterBottom>
                             Дата открытия: {accountInfo.open_date}
                         </Typography>
                         {renderAdditionalAccountInfo()}
+                        <FormControl variant="outlined" margin="normal" fullWidth>
+                            <InputLabel>Валюта</InputLabel>
+                            <Select
+                                value={selectedCurrency}
+                                onChange={handleCurrencyChange}
+                                label="Валюта"
+                            >
+                                <MenuItem value="USD">USD</MenuItem>
+                                <MenuItem value="EUR">EUR</MenuItem>
+                                <MenuItem value="RUB">RUB</MenuItem>
+                                <MenuItem value="CNY">CNY</MenuItem>
+                                <MenuItem value="BYN">BYN</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Box>
                 )}
                 <Divider />

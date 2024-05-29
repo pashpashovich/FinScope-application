@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, FormControl, Select, MenuItem, InputLabel, TextField, AppBar, Toolbar, IconButton, Avatar, CssBaseline } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Container, Typography, AppBar, Toolbar, IconButton, Avatar, CssBaseline, TextField, Button, FormControl, Select, MenuItem, InputLabel, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import BankDirectorMenu from '../../components/verticalMenu/directorMenu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 
-const apiUrl = 'http://localhost:8000/clients';  
+const apiUrl = 'http://localhost:8000/clients';
 
 const UserManagementPage = () => {
     const { userID } = useParams();
     const [users, setUsers] = useState([]);
     const [userDetails, setUserDetails] = useState({});
     const [selectedRole, setSelectedRole] = useState({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
     const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
 
-    useEffect(() => {
+    const fetchUsers = useCallback(() => {
         fetch(`${apiUrl}/users`)
             .then(response => {
                 if (!response.ok) {
@@ -25,22 +27,23 @@ const UserManagementPage = () => {
             })
             .then(data => {
                 setUsers(data);
-                data.forEach(user => {
-                    fetchUserDetails(user.id, user.role);
-                });
+                data.forEach(user => fetchUserDetails(user.id, user.role));
             })
             .catch(error => console.error('Error fetching users:', error));
+    }, []);
 
+    const fetchCurrentUser = useCallback(() => {
         axios.get(`http://localhost:8000/users/${userID}/`, {
             withCredentials: true
         })
-        .then((response) => {
-            setUserData(response.data);
-        })
-        .catch((error) => {
-            console.error('Error fetching user data:', error);
-        });
+        .then(response => setUserData(response.data))
+        .catch(error => console.error('Error fetching user data:', error));
     }, [userID]);
+
+    useEffect(() => {
+        fetchUsers();
+        fetchCurrentUser();
+    }, [fetchUsers, fetchCurrentUser]);
 
     const fetchUserDetails = (userId, role) => {
         let endpoint = '';
@@ -82,12 +85,22 @@ const UserManagementPage = () => {
 
     const handleUpdateRole = (userId) => {
         const role = selectedRole[userId];
+        const userDetail = {
+            role,
+            first_name: userDetails[userId]?.first_name || '',
+            last_name: userDetails[userId]?.last_name || '',
+            income: userDetails[userId]?.income || '',
+            phone_number: userDetails[userId]?.phone_number || '',
+            address: userDetails[userId]?.address || '',
+            bank_department_number: userDetails[userId]?.bank_department_number || ''
+        };
+
         fetch(`${apiUrl}/update-role/${userId}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ role }),
+            body: JSON.stringify(userDetail),
         })
         .then(response => {
             if (!response.ok) {
@@ -97,7 +110,7 @@ const UserManagementPage = () => {
         })
         .then(() => {
             setUsers(users.map(user => user.id === userId ? { ...user, role } : user));
-            fetchUserDetails(userId, role);  
+            fetchUserDetails(userId, role);
         })
         .catch(error => console.error('Error updating role:', error));
     };
@@ -177,13 +190,14 @@ const UserManagementPage = () => {
                 phone_number: details.phone_number,
             };
         }
+
         fetch(endpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(data),
-          })
+        })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -202,6 +216,32 @@ const UserManagementPage = () => {
             })
             .catch((error) => console.error('Error during logout:', error));
     };
+
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const filteredUsers = users.filter(user => {
+        return user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+            return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+            return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -232,20 +272,60 @@ const UserManagementPage = () => {
                     <Typography variant="h4" gutterBottom>
                         Управление пользователями
                     </Typography>
-                    <Paper sx={{ p: 2 }}>
+                    <TextField
+                        label="Search by Email"
+                        variant="outlined"
+                        fullWidth
+                        margin="normal"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                    />
+                    <Paper sx={{ p: 2, marginTop: 2 }}>
                         <TableContainer component={Paper}>
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>ID</TableCell>
-                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>Email</TableCell>
-                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>Role</TableCell>
-                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>Status</TableCell>
+                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
+                                            <TableSortLabel
+                                                active={sortConfig.key === 'id'}
+                                                direction={sortConfig.direction}
+                                                onClick={() => handleSort('id')}
+                                            >
+                                                ID
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
+                                            <TableSortLabel
+                                                active={sortConfig.key === 'email'}
+                                                direction={sortConfig.direction}
+                                                onClick={() => handleSort('email')}
+                                            >
+                                                Email
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
+                                            <TableSortLabel
+                                                active={sortConfig.key === 'role'}
+                                                direction={sortConfig.direction}
+                                                onClick={() => handleSort('role')}
+                                            >
+                                                Role
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
+                                            <TableSortLabel
+                                                active={sortConfig.key === 'is_active'}
+                                                direction={sortConfig.direction}
+                                                onClick={() => handleSort('is_active')}
+                                            >
+                                                Status
+                                            </TableSortLabel>
+                                        </TableCell>
                                         <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {users.map((user) => (
+                                    {sortedUsers.map((user) => (
                                         <TableRow key={user.id} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
                                             <TableCell>{user.id}</TableCell>
                                             <TableCell>{user.email}</TableCell>
@@ -273,7 +353,6 @@ const UserManagementPage = () => {
                                                 <Button variant="contained" onClick={() => handleBlockUnblock(user.id, user.is_active ? 'block' : 'unblock')}>
                                                     {user.is_active ? 'Block' : 'Unblock'}
                                                 </Button>
-
                                                 {userDetails[user.id] && (
                                                     <>
                                                         <TextField

@@ -33,6 +33,21 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg') 
 from rest_framework import permissions, status
+from reportlab.pdfbase import pdfmetrics
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from .models import Transaction, Receipt
+from django.core.files.base import ContentFile
+from io import BytesIO
+from reportlab.pdfbase.ttfonts import TTFont
+import io
+from django.shortcuts import get_object_or_404
+
+
 
 
 
@@ -52,10 +67,15 @@ class TransactionsByDateRangeAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class TransactionListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionSerializer
     permission_classes = (permissions.AllowAny,)
     authentication_classes = ()
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        for transaction in queryset:
+            transaction.formatted_time = transaction.formatted_time()
+        return queryset
     
     
 
@@ -132,7 +152,6 @@ def generate_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="transactions_report.pdf"'
     response.write(buffer.getvalue())
     buffer.close()
-    print(get_exchange_rate_by_code(431))
     return response
 
 def generate_chart_data(transactions):
@@ -148,13 +167,39 @@ def generate_chart_data(transactions):
     return sorted_dates, sorted_counts
 
 
-def get_exchange_rate_by_code(currency_code):
-    url = f"https://api.nbrb.by/exrates/rates/{currency_code}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        return data['Cur_OfficialRate'] / data['Cur_Scale']
-    else:
-        raise ValueError(f"Unable to fetch exchange rate for {currency_code}")
+
+class TransactionReceiptView(APIView):
+    def get(self, request, transaction_id):
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer)
+
+        pdfmetrics.registerFont(TTFont('DejaVuSerif', 'D:/DRF/backend/transactions/DejaVuSerif.ttf','UTF-8'))
+
+        p.setFont("DejaVuSerif", 12)
+
+        p.drawString(100, 800, f"Transaction Report")
+        p.drawString(100, 780, f"Transaction ID: {transaction.id}")
+        p.drawString(100, 760, f"Sender Account: {transaction.sender_account.account_num if transaction.sender_account else 'N/A'}")
+        p.drawString(100, 740, f"Receiver Account: {transaction.recipient_account.account_num if transaction.recipient_account else 'N/A'}")
+        p.drawString(100, 720, f"Sum: {transaction.amount} {transaction.currency}")
+        p.drawString(100, 700, f"Transaction type: {transaction.transaction_type}")
+        p.drawString(100, 680, f"Transaction time: {transaction.formatted_time()}")
+
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        return HttpResponse(buffer, content_type='application/pdf')
+
+class ListReceiptsView(APIView):
+    def get(self, request):
+        receipts = Receipt.objects.all()
+        data = [{'transaction_id': receipt.transaction.id, 'pdf_file': receipt.pdf_file.url} for receipt in receipts]
+        return Response(data, status=status.HTTP_200_OK)
+
+
+
 
 

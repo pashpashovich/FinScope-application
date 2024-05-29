@@ -11,6 +11,10 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Account, CheckingAccount, SavingsAccount, CreditAccount, SocialAccount, Client
 from rest_framework import permissions, status
+from rest_framework.views import APIView
+import requests
+
+
 
 
 
@@ -195,3 +199,29 @@ class SavingAccountByIdAPIView(generics.RetrieveAPIView):
         data = serializer.data
         data['account_type'] = 'Сберегательный счет' 
         return Response(data)
+    
+
+class CurrencyConversionView(APIView):
+    def get(self, request, account_balance, from_currency, to_currency):
+        try:
+            account_balance = float(account_balance)
+            response = requests.get('https://www.nbrb.by/api/exrates/rates?periodicity=0')
+            rates = response.json()
+            rates_map = {rate['Cur_Abbreviation']: rate['Cur_OfficialRate'] for rate in rates}
+            scale_map = {rate['Cur_Abbreviation']: rate['Cur_Scale'] for rate in rates}
+            rates_map['BYN'] = 1.0  
+
+            if from_currency != 'BYN':
+                base_amount = account_balance * rates_map[from_currency] / scale_map[from_currency]
+            else:
+                base_amount = account_balance
+
+            if to_currency != 'BYN':
+                converted_amount = base_amount / rates_map[to_currency] * scale_map[to_currency]
+            else:
+                converted_amount = base_amount
+
+            return Response({to_currency: converted_amount}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

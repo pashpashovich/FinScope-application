@@ -87,13 +87,14 @@ class ApproveUserView(APIView):
         user.save()
         return Response({'status': 'User approved'}, status=status.HTTP_200_OK)
 
+
 class UpdateUserRoleView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = ()
 
     def post(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
-        new_role = request.data.role
+        new_role = request.data.get('role')
         current_role = user.role
 
         if new_role not in ['client', 'analyst', 'director']:
@@ -108,13 +109,30 @@ class UpdateUserRoleView(APIView):
             FinancialAnalyst.objects.filter(user=user).delete()
 
         if new_role == 'client':
-            Client.objects.create(user=user, **request.data)
+            if not Client.objects.filter(user=user).exists():
+                Client.objects.create(
+                    user=user,
+                    first_name=request.data.get('first_name', user.first_name),
+                    last_name=request.data.get('last_name', user.last_name),
+                    income=request.data.get('income', 0),
+                    phone_number=request.data.get('phone_number', ''),
+                    address=request.data.get('address', '')
+                )
         elif new_role == 'analyst':
-            FinancialAnalyst.objects.create(user=user, **request.data)
+            if not FinancialAnalyst.objects.filter(user=user).exists():
+                FinancialAnalyst.objects.create(
+                    user=user,
+                    first_name=request.data.get('first_name', user.first_name),
+                    last_name=request.data.get('last_name', user.last_name),
+                    bank_department_number=request.data.get('bank_department_number', ''),
+                    phone_number=request.data.get('phone_number', '')
+                )
 
         user.role = new_role
         user.save()
+
         return Response({'status': 'User role updated successfully'}, status=status.HTTP_200_OK)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteUserView(APIView):

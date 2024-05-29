@@ -81,15 +81,6 @@ const ClientMenu = ({ userID }) => {
           <ListItemText primary="Отчеты" />
         </ListItemStyled>
       </List>
-      <Divider />
-      <List>
-        <ListItemStyled button component={Link} to="/logout">
-          <ListItemIcon>
-            <LogoutIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Выход" />
-        </ListItemStyled>
-      </List>
       <Box sx={{ flexGrow: 1 }} />
       <Divider />
       <Box sx={{ p: 2, textAlign: 'center' }}>

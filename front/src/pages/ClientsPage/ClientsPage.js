@@ -7,9 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Menu from '../../components/verticalMenu/menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
-import { getCsrfToken } from '../../components/crsf/crsf';  // Make sure this path is correct
 
-// Axios default configuration
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 axios.defaults.withCredentials = true;
@@ -33,7 +31,7 @@ const DataGridContainer = styled(Paper)({
 });
 
 const ErrorTypography = styled(Typography)({
-  color: '#f44336', 
+  color: '#f44336',
   marginBottom: 10,
 });
 
@@ -82,6 +80,7 @@ function ClientsDataGrid() {
   });
   const [errorText, setErrorText] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,17 +98,27 @@ function ClientsDataGrid() {
   }, [userID]);
 
   const handleDeleteSelected = () => {
+    if (selectedRows.length === 0) {
+      setDeleteError('Нет выбранных строк для удаления.');
+      return;
+    }
+    
+    setDeleteError(''); // Clear any previous error message
+
     selectedRows.forEach((id) => {
-      axios.delete(`${apiUrl}${id}/`)
-        .then((response) => {
-          if (response.status === 200 || response.status === 204) {
-            setClients((clients) => clients.filter((client) => client.user_id !== id));
-          } else {
-            console.error('Ошибка при удалении:', response.status);
-          }
-        })
-        .catch((error) => console.error(error));
+      fetch(`${apiUrl}${id}/`, {
+        method: 'DELETE',
+      })
+      .then(response => {
+        if (response.ok) {
+          setClients(clients => clients.filter(client => client.user_id !== id));
+        } else {
+          console.error('Ошибка при удалении:', response.status);
+        }
+      })
+      .catch(error => console.error(error));
     });
+    setSelectedRows([]);
   };
 
   function handleDetailsClick(clientId) {
@@ -286,31 +295,34 @@ function ClientsDataGrid() {
           </FormContainer>
           <DataGridContainer>
             {isValidClientData(clients) ? (
-              <DataGrid
-                rows={clients}
-                columns={columns}
-                pageSize={5}
-                rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                checkboxSelection
-                autoHeight
-                getRowId={(row) => row.user_id}
-                onSelectionModelChange={(newSelection) => setSelectedRows(newSelection)}
-              />
+              <>
+                <DataGrid
+                  rows={clients}
+                  columns={columns}
+                  pageSize={5}
+                  rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                  checkboxSelection
+                  autoHeight
+                  getRowId={(row) => row.user_id}
+                  onRowSelectionModelChange={(newSelectionModel) => {
+                    setSelectedRows(newSelectionModel);
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleDeleteSelected}
+                  sx={{ mt: 2 }}
+                >
+                  Удалить выбранные
+                </Button>
+                {deleteError && <ErrorTypography>{deleteError}</ErrorTypography>}
+              </>
             ) : (
               <Typography variant="h6" color="error">
                 Ошибка: данные клиента некорректны
               </Typography>
-            )}
-            {selectedRows.length > 0 && (
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<DeleteIcon />}
-                onClick={handleDeleteSelected}
-                sx={{ mt: 2 }}
-              >
-                Удалить выбранные
-              </Button>
             )}
           </DataGridContainer>
         </Container>

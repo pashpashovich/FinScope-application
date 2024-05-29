@@ -24,11 +24,10 @@ class Account(models.Model):
         self.account_balance += amount
         self.save()
 
-    #def convert_balance_to(self, target_currency):
-     #       exchange_rate = get_exchange_rate_by_code(self.currency)
-      #      target_exchange_rate = get_exchange_rate_by_code(target_currency)
-       #     converted_amount = (float(self.account_balance) / exchange_rate) * target_exchange_rate
-        #    return round(converted_amount, 2)
+   
+    
+    
+
 
 class CheckingAccount(Account):
     overdraft_limit = models.DecimalField(max_digits=10, decimal_places=2)
