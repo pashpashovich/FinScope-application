@@ -7,6 +7,7 @@ import Menu from '../../components/verticalMenu/menu';
 import AccountDistributionChart from '../../components/charts/accTypes';
 import TransactionsByDateChart from '../../components/charts/transactionsByDateChart';
 import ClientsAccountsChart from "../../components/charts/clientsAccountsChart";
+import BoxPlotChart from '../../components/charts/boxPlotCharts'; 
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 
@@ -41,6 +42,7 @@ const Analytics = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [transactionsByDate, setTransactionsByDate] = useState([]);
+  const [transactionType, setTransactionType] = useState(''); 
 
   useEffect(() => {
     if (!dataLoaded) {
@@ -100,6 +102,17 @@ const Analytics = () => {
         );
       case 'clientsAccounts':
         return <ClientsAccountsChart />;
+      case 'boxPlotChart': 
+        return (
+          <BoxPlotChart
+            startDate={startDate}
+            endDate={endDate}
+            transactionType={transactionType}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+            setTransactionType={setTransactionType}
+          />
+        );
       default:
         return <Typography variant="h6">Пожалуйста, выберите тип графика</Typography>;
     }
@@ -147,6 +160,7 @@ const Analytics = () => {
                   <MenuItem value="accountDistribution">Распределение счетов</MenuItem>
                   <MenuItem value="transactionsByDate">Транзакции по дате</MenuItem>
                   <MenuItem value="clientsAccounts">Доходы клиентов и балансы их счетов</MenuItem>
+                  <MenuItem value="boxPlotChart">Коробчатый график транзакций</MenuItem> {/* новый пункт меню */}
                 </Select>
               </FormControl>
             </Box>

@@ -76,7 +76,7 @@ const ClientProfilePage = () => {
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap component="div">
-            Клиенты
+            Счета
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {clientInfo && (

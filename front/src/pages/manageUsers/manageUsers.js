@@ -300,7 +300,7 @@ const UserManagementPage = () => {
                                                 direction={sortConfig.direction}
                                                 onClick={() => handleSort('email')}
                                             >
-                                                Email
+                                                Электронная почта
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
@@ -309,7 +309,7 @@ const UserManagementPage = () => {
                                                 direction={sortConfig.direction}
                                                 onClick={() => handleSort('role')}
                                             >
-                                                Role
+                                                Роль
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
@@ -318,7 +318,7 @@ const UserManagementPage = () => {
                                                 direction={sortConfig.direction}
                                                 onClick={() => handleSort('is_active')}
                                             >
-                                                Status
+                                                Статус
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell sx={{ backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
@@ -331,24 +331,24 @@ const UserManagementPage = () => {
                                             <TableCell>{user.email}</TableCell>
                                             <TableCell>
                                                 <FormControl sx={{ minWidth: 120 }}>
-                                                    <InputLabel>Role</InputLabel>
+                                                    <InputLabel>Роль</InputLabel>
                                                     <Select
                                                         value={selectedRole[user.id] || user.role}
                                                         onChange={(e) => handleRoleChange(e, user.id)}
                                                         displayEmpty
                                                     >
-                                                        <MenuItem value="client">Client</MenuItem>
-                                                        <MenuItem value="analyst">Analyst</MenuItem>
+                                                        <MenuItem value="client">Клиент</MenuItem>
+                                                        <MenuItem value="analyst">Аналитик</MenuItem>
                                                     </Select>
                                                 </FormControl>
                                             </TableCell>
-                                            <TableCell>{user.is_active ? 'Active' : 'Blocked'}</TableCell>
+                                            <TableCell>{user.is_active ? 'Активен' : 'Заблокирован'}</TableCell>
                                             <TableCell>
                                                 <Button variant="contained" color="primary" onClick={() => handleUpdateRole(user.id)} sx={{ marginRight: 1 }}>
-                                                    Update Role
+                                                    Обновить роль
                                                 </Button>
                                                 <Button variant="contained" color="secondary" onClick={() => handleDelete(user.id)} sx={{ marginRight: 1 }}>
-                                                    Delete
+                                                    Удалить
                                                 </Button>
                                                 <Button variant="contained" onClick={() => handleBlockUnblock(user.id, user.is_active ? 'block' : 'unblock')}>
                                                     {user.is_active ? 'Block' : 'Unblock'}
@@ -357,7 +357,7 @@ const UserManagementPage = () => {
                                                     <>
                                                         <TextField
                                                             name="first_name"
-                                                            label="First Name"
+                                                            label="Имя"
                                                             value={userDetails[user.id]?.first_name || ''}
                                                             onChange={(e) => handleInputChange(e, user.id)}
                                                             fullWidth
@@ -365,7 +365,7 @@ const UserManagementPage = () => {
                                                         />
                                                         <TextField
                                                             name="last_name"
-                                                            label="Last Name"
+                                                            label="Фамилия"
                                                             value={userDetails[user.id]?.last_name || ''}
                                                             onChange={(e) => handleInputChange(e, user.id)}
                                                             fullWidth
@@ -375,7 +375,7 @@ const UserManagementPage = () => {
                                                             <>
                                                                 <TextField
                                                                     name="income"
-                                                                    label="Income"
+                                                                    label="Доход"
                                                                     value={userDetails[user.id]?.income || ''}
                                                                     onChange={(e) => handleInputChange(e, user.id)}
                                                                     fullWidth
@@ -383,7 +383,7 @@ const UserManagementPage = () => {
                                                                 />
                                                                 <TextField
                                                                     name="phone_number"
-                                                                    label="Phone Number"
+                                                                    label="Номер телефона"
                                                                     value={userDetails[user.id]?.phone_number || ''}
                                                                     onChange={(e) => handleInputChange(e, user.id)}
                                                                     fullWidth
@@ -391,7 +391,7 @@ const UserManagementPage = () => {
                                                                 />
                                                                 <TextField
                                                                     name="address"
-                                                                    label="Address"
+                                                                    label="Адрес"
                                                                     value={userDetails[user.id]?.address || ''}
                                                                     onChange={(e) => handleInputChange(e, user.id)}
                                                                     fullWidth
@@ -403,7 +403,7 @@ const UserManagementPage = () => {
                                                             <>
                                                                 <TextField
                                                                     name="bank_department_number"
-                                                                    label="Bank Department Number"
+                                                                    label="Номер банковского отделения"
                                                                     value={userDetails[user.id]?.bank_department_number || ''}
                                                                     onChange={(e) => handleInputChange(e, user.id)}
                                                                     fullWidth
@@ -411,7 +411,7 @@ const UserManagementPage = () => {
                                                                 />
                                                                 <TextField
                                                                     name="phone_number"
-                                                                    label="Phone Number"
+                                                                    label="Номер телефона"
                                                                     value={userDetails[user.id]?.phone_number || ''}
                                                                     onChange={(e) => handleInputChange(e, user.id)}
                                                                     fullWidth
@@ -420,7 +420,7 @@ const UserManagementPage = () => {
                                                             </>
                                                         )}
                                                         <Button variant="contained" color="primary" onClick={() => handleSaveDetails(user.id, selectedRole[user.id] || user.role)} sx={{ marginTop: 1 }}>
-                                                            Save Details
+                                                            Сохранить изменения
                                                         </Button>
                                                     </>
                                                 )}

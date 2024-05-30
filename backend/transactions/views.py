@@ -21,7 +21,7 @@ from datetime import datetime
 import matplotlib
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image
 from django.utils.dateparse import parse_datetime
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
@@ -46,7 +46,52 @@ from io import BytesIO
 from reportlab.pdfbase.ttfonts import TTFont
 import io
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_date
+import numpy as np
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from django.db.models import Max, Min, Avg, Sum, Q
+from .models import Transaction
+import calendar
+from datetime import datetime
 
+class AccountTransactionStats(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = ()
+
+    def get(self, request, account_num, month):
+        year = datetime.now().year
+        last_day = calendar.monthrange(year, int(month))[1]
+        start_date = datetime(year, int(month), 1)
+        end_date = datetime(year, int(month), last_day)
+
+        transactions = Transaction.objects.filter(
+            transaction_time__date__range=(start_date, end_date),
+            sender_account__account_num=account_num
+        )
+
+        agg_stats = transactions.aggregate(
+            Max('amount'), Min('amount'), Avg('amount')
+        )
+
+        deposit_sum = transactions.filter(
+            Q(transaction_type='deposit') | Q(transaction_type='transfer', recipient_account__account_num=account_num)
+        ).aggregate(total_deposit=Sum('amount'))
+
+        withdrawal_sum = transactions.filter(
+            Q(transaction_type='withdrawal') | Q(transaction_type='transfer', sender_account__account_num=account_num)
+        ).aggregate(total_withdrawal=Sum('amount'))
+
+        response_data = {
+            'max_transaction': agg_stats['amount__max'],
+            'min_transaction': agg_stats['amount__min'],
+            'avg_transaction': agg_stats['amount__avg'],
+            'total_deposits': deposit_sum['total_deposit'],
+            'total_withdrawals': withdrawal_sum['total_withdrawal']
+        }
+
+        return Response(response_data)
 
 
 
@@ -69,12 +114,20 @@ class TransactionsByDateRangeAPIView(APIView):
 class TransactionListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = (permissions.AllowAny,)
     authentication_classes = ()
-    queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+
     def get_queryset(self):
-        queryset = super().get_queryset()
-        for transaction in queryset:
-            transaction.formatted_time = transaction.formatted_time()
+        queryset = Transaction.objects.all()
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            start_date = parse_date(start_date)
+            queryset = queryset.filter(transaction_time__date__gte=start_date)
+        if end_date:
+            end_date = parse_date(end_date)
+            queryset = queryset.filter(transaction_time__date__lte=end_date)
+            
         return queryset
     
     
@@ -91,19 +144,26 @@ class AccountTransactionsAPIView(generics.ListAPIView):
 
 
 def generate_pdf(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
     transactions = Transaction.objects.all()
 
+    if start_date:
+        start_date = parse_date(start_date)
+        transactions = transactions.filter(transaction_time__date__gte=start_date)
+    if end_date:
+        end_date = parse_date(end_date)
+        transactions = transactions.filter(transaction_time__date__lte=end_date)
+    
     dates, counts = generate_chart_data(transactions)
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
 
-    
-
     elements.append(Paragraph("Transaction Report", getSampleStyleSheet()['Title']))
     elements.append(Paragraph(f"Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", getSampleStyleSheet()['Normal']))
-
 
     data = [["ID", "Sender Account", "Recipient Account", "Amount", "Date", "Type"]]
     for transaction in transactions:
@@ -127,6 +187,7 @@ def generate_pdf(request):
     ]))
     elements.append(table)
     elements.append(Paragraph("<br/>"))  
+    
     plt.figure(figsize=(10, 5))
     plt.plot(dates, counts, marker='o')
     plt.title('Transactions by Date')
@@ -140,11 +201,10 @@ def generate_pdf(request):
     plt.close()
 
     chart_image = Image(buf)
-    chart_image.drawHeight=400
-    chart_image.drawWidth=360
+    chart_image.drawHeight = 400
+    chart_image.drawWidth = 360
 
     elements.append(chart_image)
-
 
     doc.build(elements)
 
@@ -198,6 +258,33 @@ class ListReceiptsView(APIView):
         receipts = Receipt.objects.all()
         data = [{'transaction_id': receipt.transaction.id, 'pdf_file': receipt.pdf_file.url} for receipt in receipts]
         return Response(data, status=status.HTTP_200_OK)
+
+
+
+def boxplot_data(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    transaction_type = request.GET.get('transaction_type')
+
+    transactions = Transaction.objects.filter(transaction_time__date__gte=start_date, transaction_time__date__lte=end_date, transaction_type=transaction_type)
+
+    data = {}
+    for transaction in transactions:
+        transaction_date = str(transaction.transaction_time.date())
+        if transaction_date not in data:
+            data[transaction_date] = []
+        data[transaction_date].append(float(transaction.amount))
+
+    boxplot_data = {
+        'labels': sorted(data.keys()),
+        'datasets': [{
+            'label': 'Transaction Amounts',
+            'data': [np.percentile(data[date], [0, 25, 50, 75, 100]).tolist() for date in sorted(data)]
+        }]
+    }
+
+    return JsonResponse(boxplot_data)
+
 
 
 

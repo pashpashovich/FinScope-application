@@ -17,7 +17,7 @@ import DirectorUser from './pages/manageUsers/manageUsers'
 import ClientProfilePage from './pages/clientProfile/ClientProfile';
 import ClientsAccPage from './pages/ClientsProfileAccs/clientsAccs';
 import ClientsAccTrPage from './pages/ClientAccsTransactions/clientAccsTransactions';
-
+import ClientReportPage from './pages/userReportPage/userReportPage'
 
 
 
@@ -41,6 +41,7 @@ function App() {
                 <Route path="/data/:userID" element={<ClientsPage/>}></Route>
                 <Route path="/login/client/:clientId/:userID" element={<ClientsAccountPage />} />
                 <Route path="/client/edit/:clientId/:userID" element={<EditClietnPage />} />
+                <Route path="/client/reports/:userID" element={<ClientReportPage />} />
                 <Route path="/account/:accountID/:userID" element={<AccountTransactionsPage />} />
                 <Route path="/analytics/:userID" element={<Analytics/>} />
                 <Route path="/analysis/:userID" element={<TransactionsReport/>} />

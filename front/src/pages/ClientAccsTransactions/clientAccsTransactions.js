@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField, Button, Box, Divider, FormControl, InputLabel, Select, MenuItem, CssBaseline, AppBar, Toolbar, Avatar, Drawer, useMediaQuery, Grid } from '@mui/material';
+import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField, Button, Box, Divider, FormControl, InputLabel, Select, MenuItem, CssBaseline, AppBar, Toolbar, Avatar, Drawer, useMediaQuery } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { styled, useTheme } from '@mui/material/styles';
@@ -50,25 +50,25 @@ const AccountTransactionsPage = () => {
     const [avatarUrl, setAvatarUrl] = useState(null);
     const [accountInfo, setAccountInfo] = useState(null);
     const [transactions, setTransactions] = useState([]);
-    const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [convertedBalance, setConvertedBalance] = useState(null);
     const [selectedCurrency, setSelectedCurrency] = useState('BYN');
     const [transactionCurrency, setTransactionCurrency] = useState('BYN');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filters, setFilters] = useState({
-        transactionType: '',
-        currency: ''
-    });
     const [newTransactionData, setNewTransactionData] = useState({
         sender_account: '',
         recipient_account: '',
         amount: '',
         transaction_type: 'withdrawal'
     });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filters, setFilters] = useState({
+        transactionType: '',
+        currency: ''
+    });
+
     const navigate = useNavigate();
-    const apiUrl = 'http://localhost:8000/accounts';
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const apiUrl = 'http://localhost:8000/accounts';
 
     useEffect(() => {
         Promise.any([
@@ -85,10 +85,7 @@ const AccountTransactionsPage = () => {
 
         fetch(`http://localhost:8000/transactions/${accountID}`)
         .then(response => response.json())
-        .then(data => {
-            setTransactions(data);
-            setFilteredTransactions(data);
-        })
+        .then(data => setTransactions(data))
         .catch(error => console.error(error));
 
         fetch(`http://localhost:8000/clients/${userID}`)
@@ -145,7 +142,6 @@ const AccountTransactionsPage = () => {
         try {
             const response = await axios.post('http://localhost:8000/transactions/', transactionData);
             setTransactions([...transactions, response.data]);
-            setFilteredTransactions([...transactions, response.data]);
             setNewTransactionData({
                 sender_account: '',
                 recipient_account: '',
@@ -217,35 +213,22 @@ const AccountTransactionsPage = () => {
             .catch((error) => console.error('Error during logout:', error));
     };
 
+    const handleSearchChange = (event) => {
+        setSearchQuery(event.target.value);
+    };
+
     const handleFilterChange = (event) => {
         const { name, value } = event.target;
         setFilters({ ...filters, [name]: value });
     };
 
-    const handleSearchChange = (event) => {
-        setSearchQuery(event.target.value);
-    };
-
-    useEffect(() => {
-        let filteredData = transactions;
-
-        if (filters.transactionType) {
-            filteredData = filteredData.filter(transaction => transaction.transaction_type === filters.transactionType);
-        }
-
-        if (filters.currency) {
-            filteredData = filteredData.filter(transaction => transaction.currency === filters.currency);
-        }
-
-        if (searchQuery) {
-            filteredData = filteredData.filter(transaction => 
-                transaction.transaction_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                transaction.amount.toString().toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-
-        setFilteredTransactions(filteredData);
-    }, [filters, searchQuery, transactions]);
+    const filteredTransactions = transactions.filter(transaction => {
+        return (
+            transaction.transaction_type.includes(filters.transactionType) &&
+            transaction.currency.includes(filters.currency) &&
+            (transaction.transaction_type.includes(searchQuery) || transaction.amount.toString().includes(searchQuery))
+        );
+    });
 
     return (
         <MenuContainer>
@@ -315,55 +298,50 @@ const AccountTransactionsPage = () => {
                             </Box>
                         )}
                         <Divider />
-                        <Box marginTop={3} width="100%">
+                        <Box marginTop={3}>
                             <Typography variant="h5" gutterBottom>
                                 Транзакции счета {accountID}
                             </Typography>
-                            <Grid container spacing={2} marginBottom={3}>
-                                <Grid item xs={12} sm={4}>
-                                    <TextField
-                                        label="Поиск"
-                                        variant="outlined"
-                                        fullWidth
-                                        value={searchQuery}
-                                        onChange={handleSearchChange}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={4}>
-                                    <FormControl variant="outlined" fullWidth>
-                                        <InputLabel>Тип транзакции</InputLabel>
-                                        <Select
-                                            name="transactionType"
-                                            value={filters.transactionType}
-                                            onChange={handleFilterChange}
-                                            label="Тип транзакции"
-                                        >
-                                            <MenuItem value="">Все</MenuItem>
-                                            <MenuItem value="withdrawal">Снятие</MenuItem>
-                                            <MenuItem value="transfer">Перевод</MenuItem>
-                                            <MenuItem value="deposit">Депозит</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={4}>
-                                    <FormControl variant="outlined" fullWidth>
-                                        <InputLabel>Валюта</InputLabel>
-                                        <Select
-                                            name="currency"
-                                            value={filters.currency}
-                                            onChange={handleFilterChange}
-                                            label="Валюта"
-                                        >
-                                            <MenuItem value="">Все</MenuItem>
-                                            <MenuItem value="USD">USD</MenuItem>
-                                            <MenuItem value="EUR">EUR</MenuItem>
-                                            <MenuItem value="RUB">RUB</MenuItem>
-                                            <MenuItem value="CNY">CNY</MenuItem>
-                                            <MenuItem value="BYN">BYN</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                            </Grid>
+                            <Box display="flex" justifyContent="space-between" mb={2}>
+                                <TextField
+                                    label="Поиск"
+                                    variant="outlined"
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                    fullWidth
+                                    sx={{ mr: 1 }}
+                                />
+                                <FormControl variant="outlined" sx={{ minWidth: 120, mr: 1 }}>
+                                    <InputLabel>Тип транзакции</InputLabel>
+                                    <Select
+                                        name="transactionType"
+                                        value={filters.transactionType}
+                                        onChange={handleFilterChange}
+                                        label="Тип транзакции"
+                                    >
+                                        <MenuItem value="">Все</MenuItem>
+                                        <MenuItem value="withdrawal">Снятие</MenuItem>
+                                        <MenuItem value="transfer">Перевод</MenuItem>
+                                        <MenuItem value="deposit">Депозит</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+                                    <InputLabel>Валюта</InputLabel>
+                                    <Select
+                                        name="currency"
+                                        value={filters.currency}
+                                        onChange={handleFilterChange}
+                                        label="Валюта"
+                                    >
+                                        <MenuItem value="">Все</MenuItem>
+                                        <MenuItem value="USD">USD</MenuItem>
+                                        <MenuItem value="EUR">EUR</MenuItem>
+                                        <MenuItem value="RUB">RUB</MenuItem>
+                                        <MenuItem value="CNY">CNY</MenuItem>
+                                        <MenuItem value="BYN">BYN</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
                             <TableContainer component={Paper}>
                                 <Table>
                                     <TableHead>

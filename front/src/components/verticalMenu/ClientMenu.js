@@ -74,7 +74,7 @@ const ClientMenu = ({ userID }) => {
           </ListItemIcon>
           <ListItemText primary="Счета" />
         </ListItemStyled>
-        <ListItemStyled button component={Link} to={`/client/reports`}>
+        <ListItemStyled button component={Link} to={`/client/reports/${userID}`}>
           <ListItemIcon>
             <AssessmentIcon style={{ color: 'white' }} />
           </ListItemIcon>
@@ -99,7 +99,7 @@ const ClientMenu = ({ userID }) => {
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
