@@ -14,20 +14,50 @@ axios.defaults.withCredentials = true;
 
 const apiUrl = 'http://localhost:8000/clients/';
 const apiUrl2 = 'http://localhost:8000/clients/financial-analyst/';
+const checkEmailUrl = 'http://localhost:8000/api/check-email';
 
 const FormContainer = styled(Box)({
-  padding: 20,
+  padding: '20px',
   backgroundColor: '#f5f5f5',
-  borderRadius: 8,
-  marginTop: 20,
+  borderRadius: '8px',
+  marginTop: '5px',
+  width: '100%', 
+  '@media (max-width: 1200px)': {
+    padding: '15px',
+  },
+  '@media (max-width: 600px)': {
+    padding: '10px',
+  },
+});
+
+
+const MainContent = styled(Box)({
+  flexGrow: 1,
+  padding: '20px', 
+  marginLeft: '400px', 
+  '@media (max-width: 1200px)': {
+    marginLeft: '300px', 
+  },
+  '@media (max-width: 900px)': {
+    marginLeft: '200px',
+  },
+  '@media (max-width: 600px)': {
+    marginLeft: '0px',
+  },
 });
 
 const DataGridContainer = styled(Paper)({
-  padding: 20,
+  padding: '20px',
   backgroundColor: '#fff',
-  marginTop: 20,
+  marginTop: '20px',
   width: '100%',
   overflow: 'auto',
+  '@media (max-width: 1200px)': {
+    padding: '15px',
+  },
+  '@media (max-width: 600px)': {
+    padding: '10px',
+  },
 });
 
 const ErrorTypography = styled(Typography)({
@@ -40,8 +70,60 @@ const HeaderAvatar = styled(Avatar)({
   height: 40,
 });
 
+const ResponsiveBox = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  flexGrow: 1,
+  padding: '40px',
+  width: '100%', 
+  '@media (min-width: 1200px)': {
+    maxWidth: '1200px', 
+  },
+  '@media (max-width: 1199px) and (min-width: 900px)': {
+    maxWidth: '90vw', 
+  },
+  '@media (max-width: 899px)': {
+    maxWidth: '85vw', 
+  },
+});
+
+const MyButton = styled(Button)({
+  background: '#6a65ff',
+  ':hover': {
+    background: '#5a55e0', 
+  },
+});
+
+const DelButton = styled(Button)({
+  background: '#ff1f1f',
+  ':hover': {
+    background: '#e60000',
+  },
+});
+
 function ClientsDataGrid() {
   const { userID } = useParams();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const responseInterceptor = axios.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+        if (error.response && error.response.status === 403) {
+          navigate('/forbidden');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, [navigate]);
+
   const columns = [
     { field: 'user_id', headerName: 'ID', width: 70 },
     { field: 'first_name', headerName: 'Имя', width: 130 },
@@ -81,33 +163,43 @@ function ClientsDataGrid() {
   const [errorText, setErrorText] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(apiUrl)
+    axios.get(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    },})
       .then((response) => {
         setClients(response.data);
       })
       .catch((error) => console.error(error));
 
-    axios.get(`${apiUrl2}${userID}/`)
+    axios.get(`${apiUrl2}${userID}/`,
+    {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    },})
       .then((response) => {
         setAvatarUrl(response.data.user.avatar);
+        console.log(avatarUrl)
       })
       .catch((error) => console.error('Error fetching avatar:', error));
   }, [userID]);
 
   const handleDeleteSelected = () => {
     if (selectedRows.length === 0) {
-      setDeleteError('Нет выбранных строк для удаления.');
+      setDeleteError('Нет выбранных строк для удаления');
       return;
     }
     
-    setDeleteError(''); // Clear any previous error message
+    setDeleteError(''); 
 
     selectedRows.forEach((id) => {
       fetch(`${apiUrl}${id}/`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
       })
       .then(response => {
         if (response.ok) {
@@ -134,27 +226,60 @@ function ClientsDataGrid() {
     setNewClientData({ ...newClientData, [name]: value });
   };
 
-  const handleSubmit = (event) => {
+  const handleEmailCheck = async (email) => {
+    try {
+      const response = await axios.get(checkEmailUrl, {
+        params: { email },
+      });
+      return response.data.exists;
+    } catch (error) {
+      console.error('Ошибка при проверке email:', error);
+      return false;
+    }
+  };
+
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const { email, first_name, last_name, income, phone_number, address, role } = newClientData;
     const phoneRegex = /^\+\d{12,15}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const isPhoneNumberUnique = clients.every((client) => client.phone_number !== phone_number);
-
-    if (!phoneRegex.test(phone_number)) {
-      setErrorText('Некорректный формат номера телефона. Номер должен начинаться с "+" и содержать от 12 до 15 цифр.');
-      return;
-    }
-
-    if (!isPhoneNumberUnique) {
-      setErrorText('Такой номер телефона уже существует.');
-      return;
-    }
 
     if (!email || !first_name || !last_name || !phone_number || !address) {
       setErrorText('Пожалуйста, заполните все поля');
       return;
     }
+
+    if (!phoneRegex.test(phone_number)) {
+      setErrorText('Некорректный формат номера телефона. Номер должен начинаться с "+" и содержать от 12 до 15 цифр');
+      return;
+    }
+
+    if (!isPhoneNumberUnique) {
+      setErrorText('Такой номер телефона уже существует');
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      setErrorText('Некорректный формат email');
+      return;
+    }
+
+    const isEmailUnique = await handleEmailCheck(email);
+
+    if (isEmailUnique) {
+      setErrorText('Такой email уже существует');
+      return;
+    }
+
+    const parsedIncome = parseFloat(income);
+    if (isNaN(parsedIncome)) {
+      setErrorText('Доход должен быть числом');
+      return;
+    }
+
 
     axios.post(apiUrl, {
       user: { email, role },
@@ -163,7 +288,10 @@ function ClientsDataGrid() {
       income: parseFloat(income),
       phone_number,
       address,
-    })
+    }, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    },})
       .then((response) => {
         setClients([...clients, response.data]);
         setNewClientData({
@@ -187,17 +315,37 @@ function ClientsDataGrid() {
   };
 
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
+    });
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <ResponsiveBox>
+            <MainContent>
       <CssBaseline />
       <Menu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
@@ -217,12 +365,14 @@ function ClientsDataGrid() {
         <Toolbar />
         <Container maxWidth="lg">
           <FormContainer component="form" onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Typography variant="h6" gutterBottom>
               Добавить нового клиента
             </Typography>
+            </Box>
             {errorText && <ErrorTypography>{errorText}</ErrorTypography>}
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label="Email"
                   name="email"
@@ -233,7 +383,7 @@ function ClientsDataGrid() {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label="Имя"
                   name="first_name"
@@ -244,7 +394,7 @@ function ClientsDataGrid() {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label="Фамилия"
                   name="last_name"
@@ -255,7 +405,7 @@ function ClientsDataGrid() {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label="Доход"
                   name="income"
@@ -266,7 +416,7 @@ function ClientsDataGrid() {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label="Телефон"
                   name="phone_number"
@@ -277,7 +427,7 @@ function ClientsDataGrid() {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label="Адрес"
                   name="address"
@@ -289,9 +439,11 @@ function ClientsDataGrid() {
                 />
               </Grid>
             </Grid>
-            <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-              Добавить клиента
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <MyButton type="submit" variant="contained" color="primary">
+                Добавить клиента
+              </MyButton>
+            </Box>
           </FormContainer>
           <DataGridContainer>
             {isValidClientData(clients) ? (
@@ -307,17 +459,24 @@ function ClientsDataGrid() {
                   onRowSelectionModelChange={(newSelectionModel) => {
                     setSelectedRows(newSelectionModel);
                   }}
+                  sx={{
+                    '& .MuiDataGrid-root': {
+                      overflowX: 'auto',
+                    },
+                  }}
                 />
-                <Button
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <DelButton
                   variant="contained"
-                  color="secondary"
                   startIcon={<DeleteIcon />}
                   onClick={handleDeleteSelected}
                   sx={{ mt: 2 }}
                 >
                   Удалить выбранные
-                </Button>
+                </DelButton>
+                </Box>
                 {deleteError && <ErrorTypography>{deleteError}</ErrorTypography>}
+
               </>
             ) : (
               <Typography variant="h6" color="error">
@@ -327,7 +486,8 @@ function ClientsDataGrid() {
           </DataGridContainer>
         </Container>
       </Box>
-    </Box>
+      </MainContent>
+    </ResponsiveBox>
   );
 }
 

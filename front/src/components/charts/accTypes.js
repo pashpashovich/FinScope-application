@@ -22,8 +22,6 @@ const AccountDistributionChart = ({ accounts }) => {
    useEffect(() => {
     const canvas = document.getElementById('accountDistributionChart');
     const ctx = canvas.getContext('2d');
-
-    // Очистить холст и уничтожить предыдущую диаграмму
     if (window.myChart) {
         window.myChart.destroy();
     }

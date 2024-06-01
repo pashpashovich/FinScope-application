@@ -18,8 +18,6 @@ const MyButton = styled(Button)({
   color: "white"
 });
 
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost:8000';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -30,36 +28,44 @@ const SignIn = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post('http://localhost:8000/api/login', {
-        email,
-        password,
+      axios.post(
+        'http://localhost:8000/api/login',
+        { email, password },
+      )
+      .then(response => {
+        if (response.status !== 200) return;
+
+        localStorage.setItem('accessToken', response.data.access);
+        localStorage.setItem('refreshToken', response.data.refresh);
+        const { id, role } = response.data;
+        localStorage.setItem('userRole', role);
+
+        switch (role) {
+          case 'analyst':
+            navigate(`/profile/${id}`);
+            break;
+          case 'client':
+            navigate(`/profileCl/${id}`);
+            break;
+          case 'director':
+            navigate(`/profileDir/${id}`);
+            break;
+          default:
+            setErrorMessage('Неизвестная роль пользователя');
+        }
+      })
+      .catch(error => {
+        console.log(error.response.status);
+        if (error.response.status === 403) {
+          setErrorMessage('Ваш аккаунт деактивирован. Пожалуйста, свяжитесь с поддержкой.');
+        } else {
+          console.error('Ошибка при авторизации:', error);
+          setErrorMessage('Неверный логин или пароль');
+        }
       });
-
-      const { id, role } = response.data;
-      localStorage.setItem('userRole', role);
-      console.log(role);
-
-      switch (role) {
-        case 'analyst':
-          navigate(`/profile/${id}`);
-          break;
-        case 'client':
-          navigate(`/profileCl/${id}`);
-          break;
-        case 'director':
-          navigate(`/profileDir/${id}`);
-          break;
-        default:
-          setErrorMessage('Неизвестная роль пользователя');
-      }
     } catch (error) {
-      console.log(error.response.status)
-      if (error.response.status === 403) {
-        setErrorMessage('Ваш аккаунт деактивирован. Пожалуйста, свяжитесь с поддержкой.');
-      } else {
-        console.error('Ошибка при авторизации:', error);
-        setErrorMessage('Неверный логин или пароль');
-      }
+      console.error('Ошибка при авторизации:', error);
+      setErrorMessage('Неверный логин или пароль');
     }
   };
 

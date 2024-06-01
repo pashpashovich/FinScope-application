@@ -1,137 +1,231 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction, IconButton, Divider, Paper, Button, TextField, MenuItem, Box, AppBar, Toolbar, CssBaseline, Drawer } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import MenuIcon from '@mui/icons-material/Menu';
-import HomeIcon from '@mui/icons-material/Home';
-import DataUsageIcon from '@mui/icons-material/DataUsage';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import LogoutIcon from '@mui/icons-material/Logout';
-import { styled } from '@mui/material/styles';
-import logo from "./../../images/logo.png";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Typography,
+  List,
+  Avatar,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  Divider,
+  Paper,
+  Button,
+  TextField,
+  MenuItem,
+  Box,
+  AppBar,
+  Toolbar,
+  CssBaseline,
+  FormControl,
+  InputLabel,
+  Select,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Menu from "../../components/verticalMenu/menu";
+import { styled } from "@mui/material/styles";
+import axios from "axios";
+import LogoutIcon from "@mui/icons-material/Logout";
 
+const apiUrl = "http://localhost:8000/clients/financial-analyst/";
 const drawerWidth = 240;
 
 const currencies = [
-  { value: 'BYN', label: 'Белорусский рубль' },
-  { value: 'USD', label: 'Доллар США' },
-  { value: 'EUR', label: 'Евро' },
-  { value: 'RUB', label: 'Российский рубль' },
-  { value: 'CNY', label: 'Китайский юань' },
+  { value: "BYN", label: "Белорусский рубль" },
+  { value: "USD", label: "Доллар США" },
+  { value: "EUR", label: "Евро" },
+  { value: "RUB", label: "Российский рубль" },
+  { value: "CNY", label: "Китайский юань" },
 ];
 
 const MenuContainer = styled(Box)({
-  display: 'flex',
+  display: "flex",
 });
 
 const DrawerHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+  display: "flex",
+  alignItems: "center",
   padding: theme.spacing(2),
-  backgroundColor: '#030E32',
-  color: 'white',
-  justifyContent: 'center',
-  fontWeight: 'bold',
+  backgroundColor: "#030E32",
+  color: "white",
+  justifyContent: "center",
+  fontWeight: "bold",
 }));
 
-const StyledDrawer = styled(Drawer)({
-  '.MuiDrawer-paper': {
-    backgroundColor: '#030E32',
-    color: 'white',
-    width: drawerWidth,
+const HeaderAvatar = styled(Avatar)({
+  width: 40,
+  height: 40,
+});
+
+const MyButton = styled(Button)({
+  background: "#6a65ff",
+  ":hover": {
+    background: "#5a55e0",
   },
 });
 
-const ListItemStyled = styled(ListItem)({
-  '&:hover': {
-    backgroundColor: '#3A3A55',
+const BackButton = styled(IconButton)({
+  color: "white",
+  backgroundColor: "#6a65ff",
+  "&:hover": {
+    backgroundColor: "#5a55e0",
   },
+  marginRight: 10,
 });
 
 const ContentContainer = styled(Box)({
   flexGrow: 1,
   p: 3,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  width: '100%',
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
   maxWidth: 800,
-  margin: '0 auto',
-  boxSizing: 'border-box',
+  margin: "0 auto",
+  boxSizing: "border-box",
 });
 
 const MyToolbar = styled(Toolbar)({
-  color: '#051139',
+  color: "#051139",
 });
+
+const handleRequestError = (error, navigate) => {
+  if (error.response) {
+    if (error.response.status === 401) {
+      navigate("/login");
+    } else if (error.response.status === 403) {
+      navigate("/forbidden");
+    }
+  } else {
+    console.error(error);
+  }
+};
 
 const ClientAccountsPage = () => {
   const { userID } = useParams();
   const { clientId } = useParams();
   const [clientInfo, setClientInfo] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [newAccountData, setNewAccountData] = useState({
-    account_num: '',
-    account_type: '',
-    account_balance: '',
-    currency: ' ',
+    account_num: "",
+    account_type: "",
+    account_balance: "",
+    currency: " ",
     open_date: new Date().toISOString().slice(0, 10),
     account_activity: true,
-    overdraft_limit: '',
-    interest_rate: '',
-    credit_limit: '',
-    social_benefit_type: '',
+    overdraft_limit: "",
+    interest_rate: "",
+    credit_limit: "",
+    social_benefit_type: "",
   });
-  const [errorText, setErrorText] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState("BYN");
+  const [errorText, setErrorText] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://localhost:8000/clients/${clientId}`)
-      .then(response => response.json())
-      .then(data => setClientInfo(data))
-      .catch(error => console.error(error));
+    axios
+      .get(`${apiUrl}${userID}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      })
+      .then((response) => {
+        setUserData(response.data);
+        setAvatarUrl(response.data.user.avatar);
+      })
+      .catch((error) => handleRequestError(error, navigate));
+
+    fetch(`http://localhost:8000/clients/${clientId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => setClientInfo(data))
+      .catch((error) => {
+        if (error.response && error.response.status === 403) {
+          navigate('/forbidden'); 
+        } else if (error.response && error.response.status === 401) {
+          navigate('/login'); 
+        }
+      });
 
     Promise.all([
-      fetch(`http://localhost:8000/accounts/exact/${clientId}/socials`).then(response => response.json()),
-      fetch(`http://localhost:8000/accounts/exact/${clientId}/credit`).then(response => response.json()),
-      fetch(`http://localhost:8000/accounts/exact/${clientId}/savings`).then(response => response.json()),
-      fetch(`http://localhost:8000/accounts/exact/${clientId}/checking`).then(response => response.json())
-    ])
-      .then(([socialsData, creditData, savingsData, checkingData]) => {
-        setAccounts([...socialsData, ...creditData, ...savingsData, ...checkingData]);
-      })
-  }, [clientId]);
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/socials`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }).then((response) => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/credit`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }).then((response) => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/savings`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }).then((response) => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${clientId}/checking`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }).then((response) => response.json()),
+    ]).then(([socialsData, creditData, savingsData, checkingData]) => {
+      setAccounts([
+        ...socialsData,
+        ...creditData,
+        ...savingsData,
+        ...checkingData,
+      ]);
+    });
+  }, [clientId, navigate, userID]);
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
     setNewAccountData({
       ...newAccountData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     });
-    if (name === 'account_num') {
+    if (name === "account_num") {
       checkAccountExists(value);
     }
   };
 
   const checkAccountExists = (accountNum) => {
-    fetch(`http://localhost:8000/accounts/${accountNum}`)
-      .then(response => {
+    fetch(`http://localhost:8000/accounts/${accountNum}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    })
+      .then((response) => {
         if (!response.ok) {
-          setErrorText('');
+          setErrorText("");
           return;
         }
-        throw new Error('Такой номер счета уже существует');
+        throw new Error("Такой номер счета уже существует");
       })
-      .catch(error => setErrorText(error.message));
+      .catch((error) => setErrorText(error.message));
   };
 
   const handleAddAccount = () => {
-    const { account_num, account_type, account_balance, currency, overdraft_limit, interest_rate, credit_limit, social_benefit_type } = newAccountData;
-    fetch('http://localhost:8000/accounts/', {
-      method: 'POST',
+    const {
+      account_num,
+      account_type,
+      account_balance,
+      currency,
+      overdraft_limit,
+      interest_rate,
+      credit_limit,
+      social_benefit_type,
+    } = newAccountData;
+    fetch("http://localhost:8000/accounts/", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         client_id: clientId,
@@ -144,25 +238,25 @@ const ClientAccountsPage = () => {
         credit_limit: credit_limit,
         social_benefit_type: social_benefit_type,
         open_date: new Date().toISOString().slice(0, 10),
-        account_activity: true
+        account_activity: true,
       }),
     })
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         setAccounts([...accounts, data]);
         setNewAccountData({
-          account_num: '',
-          account_type: '',
-          account_balance: '',
-          currency: '',
-          overdraft_limit: '',
-          interest_rate: '',
-          credit_limit: '',
-          social_benefit_type: ''
+          account_num: "",
+          account_type: "",
+          account_balance: "",
+          currency: "",
+          overdraft_limit: "",
+          interest_rate: "",
+          credit_limit: "",
+          social_benefit_type: "",
         });
-        setErrorText('');
+        setErrorText("");
       })
-      .catch(error => console.error('Ошибка при добавлении счета:', error));
+      .catch((error) => console.error("Ошибка при добавлении счета:", error));
   };
 
   const handleDetailsClick = (accountId) => {
@@ -180,7 +274,7 @@ const ClientAccountsPage = () => {
 
   const renderAdditionalField = () => {
     switch (newAccountData.account_type) {
-      case 'checking':
+      case "checking":
         return (
           <TextField
             label="Лимит овердрафта"
@@ -192,7 +286,7 @@ const ClientAccountsPage = () => {
             fullWidth
           />
         );
-      case 'savings':
+      case "savings":
         return (
           <TextField
             label="Процентная ставка"
@@ -204,7 +298,7 @@ const ClientAccountsPage = () => {
             fullWidth
           />
         );
-      case 'credit':
+      case "credit":
         return (
           <TextField
             label="Кредитный лимит"
@@ -216,7 +310,7 @@ const ClientAccountsPage = () => {
             fullWidth
           />
         );
-      case 'socials':
+      case "socials":
         return (
           <TextField
             label="Тип социальной выплаты"
@@ -233,96 +327,78 @@ const ClientAccountsPage = () => {
     }
   };
 
-  const drawer = (
-    <>
-      <DrawerHeader>
-        <img width={30} src={logo} alt="FinanceScope logo" />
-        <Typography variant="h6">FinanceScope</Typography>
-      </DrawerHeader>
-      <Divider />
-      <List>
-        <ListItemStyled button>
-          <ListItemIcon>
-            <HomeIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Профиль" />
-        </ListItemStyled>
-        <ListItemStyled button>
-          <ListItemIcon>
-            <DataUsageIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Данные" />
-        </ListItemStyled>
-        <ListItemStyled button>
-          <ListItemIcon>
-            <AssessmentIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Анализ" />
-        </ListItemStyled>
-        <ListItemStyled button>
-          <ListItemIcon>
-            <ShowChartIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Графики" />
-        </ListItemStyled>
-        <ListItemStyled button>
-          <ListItemIcon>
-            <BarChartIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Отчеты" />
-        </ListItemStyled>
-      </List>
-      <Divider />
-      <List>
-        <ListItemStyled button>
-          <ListItemIcon>
-            <LogoutIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Выход" />
-        </ListItemStyled>
-      </List>
-    </>
-  );
+  const handleCurrencyChange = (event) => {
+    setSelectedCurrency(event.target.value);
+  };
+
+  const handleLogout = () => {
+    axios
+      .post(
+        "http://localhost:8000/api/logout",
+        {
+          refresh_token: localStorage.getItem("refreshToken"),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      )
+      .then((response) => {
+        if (response.status !== 200) return;
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        navigate("/login");
+      })
+      .catch((error) => handleRequestError(error, navigate));
+  };
 
   return (
     <MenuContainer>
       <CssBaseline />
-      <AppBar style={{ background: '#030E32' }} position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <MyToolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography  variant="h6" noWrap component="div">
-            Клиенты
-          </Typography>
-        </MyToolbar>
-      </AppBar>
-      <StyledDrawer
-        variant="permanent"
+      <Menu userID={userID} />
+      <Box
+        component="main"
         sx={{
-          display: { xs: 'none', sm: 'block' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
         }}
-        open
       >
-        {drawer}
-      </StyledDrawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}>
+        <AppBar
+          style={{ background: "#030E32" }}
+          position="fixed"
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        >
+          <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography variant="h6" noWrap component="div">
+              Клиенты
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <HeaderAvatar
+                alt="avatar"
+                src={avatarUrl || "/static/images/avatar/1.jpg"}
+              />
+              <IconButton onClick={handleLogout}>
+                <LogoutIcon style={{ color: "white" }} />
+              </IconButton>
+            </Box>
+          </Toolbar>
+        </AppBar>
         <Toolbar />
         <ContentContainer>
-          <Paper elevation={3} style={{ padding: 20, width: '100%' }}>
-            <IconButton onClick={handleBack} style={{ marginBottom: 10 }}>
-              <ArrowBackIcon /> Назад
-            </IconButton>
+          <Paper elevation={3} style={{ padding: 20, width: "100%" }}>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+              <BackButton onClick={() => navigate(-1)}>
+                <ArrowBackIcon />
+              </BackButton>
+              <Typography variant="h5">Назад</Typography>
+            </Box>
             {clientInfo && (
               <div style={{ marginBottom: 20 }}>
                 <Typography variant="h5" gutterBottom>
-                  Личная информация о клиенте {clientInfo.first_name} {clientInfo.last_name}
+                  Личная информация о клиенте {clientInfo.first_name}{" "}
+                  {clientInfo.last_name}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
                   Email: {clientInfo.user.email}
@@ -335,28 +411,39 @@ const ClientAccountsPage = () => {
                 </Typography>
               </div>
             )}
-            <Typography variant="h5" gutterBottom>
-              Счета клиента
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Typography variant="h5" gutterBottom>
+                Счета клиента
+              </Typography>
+            </Box>
             <List>
-              {Array.isArray(accounts) && accounts.map(account => (
-                <div key={account.account_num}>
-                  <ListItem>
-                    <ListItemText
-                      primary={account.account_type}
-                      secondary={`Баланс: ${account.account_balance} ${account.currency}`}
-                    />
-                    <ListItemSecondaryAction>
-                      <Button onClick={() => handleDetailsClick(account.account_num)}>Подробнее</Button>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  <Divider />
-                </div>
-              ))}
+              {Array.isArray(accounts) &&
+                accounts.map((account) => (
+                  <div key={account.account_num}>
+                    <ListItem>
+                      <ListItemText
+                        primary={account.account_type}
+                        secondary={`Баланс: ${account.account_balance} ${account.currency}`}
+                      />
+                      <ListItemSecondaryAction>
+                        <Button
+                          onClick={() =>
+                            handleDetailsClick(account.account_num)
+                          }
+                        >
+                          Подробнее
+                        </Button>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    <Divider />
+                  </div>
+                ))}
             </List>
-            <Typography variant="h5" gutterBottom>
-              Добавить счет
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Typography variant="h5" gutterBottom>
+                Добавить счет
+              </Typography>
+            </Box>
             <TextField
               label="Номер счета"
               name="account_num"
@@ -392,26 +479,32 @@ const ClientAccountsPage = () => {
               margin="normal"
               fullWidth
             />
-            <TextField
-              select
-              label="Валюта"
-              name="currency"
-              value={newAccountData.currency}
-              onChange={handleInputChange}
-              variant="outlined"
-              margin="normal"
-              fullWidth
-            >
-              {currencies.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <FormControl variant="outlined" margin="normal" fullWidth>
+              <InputLabel>Валюта</InputLabel>
+              <Select
+                value={newAccountData.currency}
+                onChange={handleInputChange}
+                label="Валюта"
+                name="currency"
+              >
+                {currencies.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             {renderAdditionalField()}
-            <Button onClick={handleAddAccount} variant="contained" color="primary" style={{ marginTop: 20 }}>
-              Добавить счет
-            </Button>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <MyButton
+                onClick={handleAddAccount}
+                variant="contained"
+                color="primary"
+                style={{ marginTop: 20 }}
+              >
+                Добавить счет
+              </MyButton>
+            </Box>
           </Paper>
         </ContentContainer>
       </Box>

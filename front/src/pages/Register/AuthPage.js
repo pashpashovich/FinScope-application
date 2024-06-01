@@ -12,7 +12,6 @@ import { styled } from '@material-ui/core/styles';
 import index from "./auth.module.css";
 import axios from 'axios';
 
-
 const MyButton = styled(Button)({
   marginTop: "30px",
   backgroundColor: '#6a65ff',
@@ -61,18 +60,17 @@ const SignUp = () => {
       }
 
       const response = await axios.post('http://localhost:8000/api/register', {
-    name,
-    email,
-    password
-  },
-  {
-    withCredentials: true
-  }
-);
-      
-      console.log('Successfully registered:', response.data);
-      navigate('/login');
-    
+        name,
+        email,
+        password
+      });
+
+      if (response.status === 201) {
+        localStorage.setItem('accessToken', response.data.access);
+        localStorage.setItem('refreshToken', response.data.refresh);
+        console.log('Successfully registered:', response.data);
+        navigate('/login');
+      }
     } catch (error) {
       console.error('Error during registration:', error);
     }

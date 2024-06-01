@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Grid, Card, CardContent, Avatar, CircularProgress, AppBar, Toolbar, IconButton, CssBaseline, Input } from '@mui/material';
 import { styled } from '@mui/system';
-import axios from 'axios';  
+import axios from 'axios';
 import BankDirectorMenu from '../../components/verticalMenu/directorMenu';
 import LogoutIcon from '@mui/icons-material/Logout';
 
@@ -51,7 +51,11 @@ const DirectorProfilePage = () => {
 
   useEffect(() => {
     axios.get(`${apiUrl}${userID}/`, {
-      withCredentials: true  
+      headers: {
+
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+
+    },
     })
     .then((response) => {
       setUserData(response.data);
@@ -61,9 +65,9 @@ const DirectorProfilePage = () => {
       console.error('Error fetching user data:', error);
       setLoading(false);
       if (error.response && error.response.status === 403) {
-        navigate('/forbidden'); 
+        navigate('/forbidden');
       } else if (error.response && error.response.status === 401) {
-        navigate('/login'); 
+        navigate('/login');
       }
     });
   }, [userID, navigate]);
@@ -80,12 +84,13 @@ const DirectorProfilePage = () => {
     axios.post(`http://localhost:8000/clients/upload-avatar/${userID}/`, formData, {
       withCredentials: true,
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
       }
     })
     .then(response => {
       setUserData({ ...userData, user: { ...userData.user, avatar: response.data.avatar } });
-      window.location.reload();  
+      window.location.reload();
     })
     .catch(error => {
       console.error('Error uploading avatar:', error);
@@ -104,13 +109,32 @@ const DirectorProfilePage = () => {
   const { email, role, avatar: avatarUrl } = user;
 
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
+    });
   };
 
   return (

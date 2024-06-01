@@ -6,6 +6,7 @@ urlpatterns = [
     path('<int:pk>/', views.ClientRetrieveUpdateDestroyAPIView.as_view(), name='client-detail'),
     path('bank-director/<int:pk>/', views.BankDirectorRetrieveUpdateAPIView.as_view(), name='bank-director-detail'),
     path('financial-analyst/<int:pk>/', views.FinancialAnalystRetrieveUpdateAPIView.as_view(), name='financial-analyst-detail'),
+    path('analyst/<int:pk>/', views.FinancialAnalystGet.as_view(), name='financial-analyst-get'),
     path('upload-avatar/<int:user_id>/', views.UploadAvatarView.as_view(), name='upload-avatar'),
     path('users/', views.UserListView.as_view(), name='users'),
     path('block-unblock-user/<int:user_id>/', views.BlockUnblockUserView.as_view(), name='block-unblock-user'),

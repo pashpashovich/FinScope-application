@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { styled } from '@mui/material/styles';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
@@ -13,10 +13,9 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import DataUsageIcon from '@mui/icons-material/DataUsage';
-import AssessmentIcon from '@mui/icons-material/Assessment';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import logo from "./../../images/logo.png";
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import logo from './../../images/logo.png';
 
 const drawerWidth = 240;
 
@@ -48,8 +47,18 @@ const ListItemStyled = styled(ListItem)({
   },
 });
 
-const Menu = ({ userID }) => {  
-  const [mobileOpen, setMobileOpen] = useState(false);
+const MenuButtonContainer = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: theme.spacing(6),
+  left: theme.spacing(1),
+  zIndex: 1300, 
+  [theme.breakpoints.up('sm')]: {
+    display: 'none',
+  },
+}));
+
+const ClientMenu = ({ userID }) => {
+  const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -63,7 +72,7 @@ const Menu = ({ userID }) => {
       </DrawerHeader>
       <Divider />
       <List>
-      <ListItemStyled button component={Link} to={`/profile/${userID}`}>
+        <ListItemStyled button component={Link} to={`/profile/${userID}`}>
           <ListItemIcon>
             <HomeIcon style={{ color: 'white' }} />
           </ListItemIcon>
@@ -87,12 +96,6 @@ const Menu = ({ userID }) => {
           </ListItemIcon>
           <ListItemText primary="Графики" />
         </ListItemStyled>
-        <ListItemStyled button component={Link} to="/diagrams">
-          <ListItemIcon>
-            <BarChartIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Диаграммы" />
-        </ListItemStyled>
       </List>
       <Box sx={{ flexGrow: 1 }} />
       <Divider />
@@ -106,13 +109,23 @@ const Menu = ({ userID }) => {
 
   return (
     <MenuContainer>
+      <MenuButtonContainer>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={handleDrawerToggle}
+        >
+          <MenuIcon />
+        </IconButton>
+      </MenuButtonContainer>
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
         <StyledDrawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
@@ -130,17 +143,8 @@ const Menu = ({ userID }) => {
           {drawer}
         </StyledDrawer>
       </Box>
-      <IconButton
-        color="inherit"
-        aria-label="open drawer"
-        edge="start"
-        onClick={handleDrawerToggle}
-        sx={{ mr: 2, display: { sm: 'none' } }}
-      >
-        <MenuIcon />
-      </IconButton>
     </MenuContainer>
   );
 };
 
-export default Menu;
+export default ClientMenu;

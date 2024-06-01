@@ -1,64 +1,125 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status,generics
-from .models import Transaction
-from .serializers import TransactionSerializer
-from django.utils.dateparse import parse_datetime
-import pytz
-from django.http import HttpResponse
-from reportlab.lib.pagesizes import letter
-from .models import Transaction
-import matplotlib.pyplot as plt
-from io import BytesIO
-import base64
-from .models import Transaction
-from .serializers import TransactionSerializer
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from datetime import datetime
-import matplotlib
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image
-from django.utils.dateparse import parse_datetime
+from rest_framework import status, generics
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.utils.dateparse import parse_datetime, parse_date
 from django.http import HttpResponse, JsonResponse
+from django.core.files.base import ContentFile
+from django.shortcuts import get_object_or_404
+from django.db.models import Max, Min, Avg, Sum, Q
+from collections import defaultdict
+from datetime import datetime
+from decimal import Decimal
+import calendar
+import pytz
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
-from io import BytesIO
-from datetime import datetime
-import pytz
-import requests
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg') 
-from rest_framework import permissions, status
-from reportlab.pdfbase import pdfmetrics
-from django.http import HttpResponse
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image
 from reportlab.pdfgen import canvas
-from .models import Transaction, Receipt
-from django.core.files.base import ContentFile
-from io import BytesIO
+from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from .models import Transaction, Receipt
+from .serializers import TransactionSerializer
+from rest_framework.decorators import api_view, permission_classes
+from .api import get_сonvert
+from clients.permissions import IsAnalyst,IsClient,IsDirector
 import io
-from django.shortcuts import get_object_or_404
-from django.utils.dateparse import parse_date
-import numpy as np
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from django.db.models import Max, Min, Avg, Sum, Q
-from .models import Transaction
-import calendar
-from datetime import datetime
+
+
+
+class AllClientsTransactionStats(APIView):
+    permission_classes = [IsAuthenticated,IsAnalyst]
+    def get(self, request):
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+
+        if not start_date or not end_date:
+            return Response({'error': 'Start date and end date are required'}, status=400)
+
+        transactions = Transaction.objects.filter(
+            transaction_time__date__range=(start_date, end_date)
+        )
+
+        max_transaction = 0
+        min_transaction = float('inf')
+        total_amount = Decimal(0)
+        total_deposits = Decimal(0)
+        total_withdrawals = Decimal(0)
+        count = 0
+
+        for transaction in transactions:
+            amount_in_byn = transaction.convert_amount_to(transaction.amount, transaction.currency,"BYN")
+
+            if amount_in_byn > max_transaction:
+                max_transaction = amount_in_byn
+            if amount_in_byn < min_transaction:
+                min_transaction = amount_in_byn
+            total_amount += amount_in_byn
+            count += 1
+            
+            if transaction.transaction_type in ['deposit', 'transfer'] and transaction.recipient_account:
+                total_deposits += amount_in_byn
+            if transaction.transaction_type in ['withdrawal', 'transfer'] and transaction.sender_account:
+                total_withdrawals += amount_in_byn
+
+        avg_transaction = total_amount / count if count else 0
+
+        response_data = {
+            'max_transaction': max_transaction,
+            'min_transaction': min_transaction,
+            'avg_transaction': avg_transaction,
+            'total_deposits': total_deposits,
+            'total_withdrawals': total_withdrawals
+        }
+
+        return Response(response_data)
+
+
+
+
+class AccountDailyTransactionStats(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, account_num, month):
+        year = datetime.now().year
+        last_day = calendar.monthrange(year, month)[1]
+        start_date = datetime(year, month, 1)
+        end_date = datetime(year, month, last_day)
+
+        transactions = Transaction.objects.filter(
+            Q(transaction_time__date__range=(start_date, end_date)) &
+            (Q(sender_account__account_num=account_num) | Q(recipient_account__account_num=account_num))
+        )
+
+        daily_stats = defaultdict(lambda: {'deposits': 0, 'withdrawals': 0})
+
+        for transaction in transactions:
+            day = transaction.transaction_time.day
+            amount_in_byn = transaction.convert_amount_to(transaction.amount, transaction.currency, 'BYN')
+
+            if transaction.transaction_type in ['deposit', 'transfer'] and transaction.recipient_account.account_num == account_num:
+                daily_stats[day]['deposits'] += amount_in_byn
+            if transaction.transaction_type in ['withdrawal', 'transfer'] and transaction.sender_account.account_num == account_num:
+                daily_stats[day]['withdrawals'] += amount_in_byn
+
+        response_data = [{'day': day, 'deposits': stats['deposits'], 'withdrawals': stats['withdrawals']} for day, stats in daily_stats.items()]
+
+        return Response(response_data)
+
 
 class AccountTransactionStats(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
+
+
+    def convert_to_byn(self, transaction):
+    
+        return get_сonvert(transaction.amount,transaction.currency,'BYN')
 
     def get(self, request, account_num, month):
         year = datetime.now().year
@@ -67,28 +128,36 @@ class AccountTransactionStats(APIView):
         end_date = datetime(year, int(month), last_day)
 
         transactions = Transaction.objects.filter(
-            transaction_time__date__range=(start_date, end_date),
-            sender_account__account_num=account_num
+            Q(transaction_time__date__range=(start_date, end_date)) & 
+            (Q(sender_account__account_num=account_num) | Q(recipient_account__account_num=account_num))
         )
 
-        agg_stats = transactions.aggregate(
-            Max('amount'), Min('amount'), Avg('amount')
-        )
+        transactions_in_byn = [
+            self.convert_to_byn(transaction) for transaction in transactions
+        ]
 
-        deposit_sum = transactions.filter(
+        max_transaction = max(transactions_in_byn) if transactions_in_byn else 0
+        min_transaction = min(transactions_in_byn) if transactions_in_byn else 0
+        avg_transaction = sum(transactions_in_byn) / len(transactions_in_byn) if transactions_in_byn else 0
+
+
+        deposit_transactions = transactions.filter(
             Q(transaction_type='deposit') | Q(transaction_type='transfer', recipient_account__account_num=account_num)
-        ).aggregate(total_deposit=Sum('amount'))
+        )
+        total_deposit_in_byn = sum(self.convert_to_byn(transaction) for transaction in deposit_transactions)
 
-        withdrawal_sum = transactions.filter(
+
+        withdrawal_transactions = transactions.filter(
             Q(transaction_type='withdrawal') | Q(transaction_type='transfer', sender_account__account_num=account_num)
-        ).aggregate(total_withdrawal=Sum('amount'))
+        )
+        total_withdrawal_in_byn = sum(self.convert_to_byn(transaction) for transaction in withdrawal_transactions)
 
         response_data = {
-            'max_transaction': agg_stats['amount__max'],
-            'min_transaction': agg_stats['amount__min'],
-            'avg_transaction': agg_stats['amount__avg'],
-            'total_deposits': deposit_sum['total_deposit'],
-            'total_withdrawals': withdrawal_sum['total_withdrawal']
+            'max_transaction': max_transaction,
+            'min_transaction': min_transaction,
+            'avg_transaction': avg_transaction,
+            'total_deposits': total_deposit_in_byn,
+            'total_withdrawals': total_withdrawal_in_byn
         }
 
         return Response(response_data)
@@ -97,8 +166,8 @@ class AccountTransactionStats(APIView):
 
 
 class TransactionsByDateRangeAPIView(APIView):
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, *args, **kwargs):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
@@ -112,8 +181,7 @@ class TransactionsByDateRangeAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class TransactionListCreateAPIView(generics.ListCreateAPIView):
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
 
     def get_queryset(self):
@@ -133,20 +201,21 @@ class TransactionListCreateAPIView(generics.ListCreateAPIView):
     
 
 class AccountTransactionsAPIView(generics.ListAPIView):
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
-    serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         account_num = self.kwargs['account_num']  
         return Transaction.objects.filter(sender_account__account_num=account_num) | \
                Transaction.objects.filter(recipient_account__account_num=account_num)
 
 
-
+@permission_classes([IsAuthenticated,IsAnalyst])
 def generate_pdf(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-    
+    first_name = request.GET.get('first_name')
+    last_name = request.GET.get('last_name')
+
     transactions = Transaction.objects.all()
 
     if start_date:
@@ -163,15 +232,56 @@ def generate_pdf(request):
     elements = []
 
     elements.append(Paragraph("Transaction Report", getSampleStyleSheet()['Title']))
+    elements.append(Paragraph("<br/>"))  
     elements.append(Paragraph(f"Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Generated by: {first_name} {last_name}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Period: {start_date}-{end_date}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
 
-    data = [["ID", "Sender Account", "Recipient Account", "Amount", "Date", "Type"]]
+    max_transaction = 0
+    min_transaction = float('inf')
+    total_amount = Decimal(0)
+    total_deposits = Decimal(0)
+    total_withdrawals = Decimal(0)
+    count = 0
+
+    for transaction in transactions:
+        amount_in_byn = transaction.convert_amount_to(transaction.amount, transaction.currency,"BYN")
+
+        if amount_in_byn > max_transaction:
+            max_transaction = amount_in_byn
+        if amount_in_byn < min_transaction:
+            min_transaction = amount_in_byn
+        total_amount += amount_in_byn
+        count += 1
+        
+        if transaction.transaction_type in ['deposit', 'transfer'] and transaction.recipient_account:
+            total_deposits += amount_in_byn
+        if transaction.transaction_type in ['withdrawal', 'transfer'] and transaction.sender_account:
+            total_withdrawals += amount_in_byn
+
+    elements.append(Paragraph(f"Max transaction: {max_transaction}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Min transaction: {min_transaction}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total sum of transactions: {total_amount}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total sum of deposits: {total_deposits}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total sum of withdrawals: {total_withdrawals}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total count of transactions: {count}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+
+
+    data = [["ID","Amount", "Currency","Date", "Type"]]
     for transaction in transactions:
         data.append([
             transaction.id,
-            str(transaction.sender_account),
-            str(transaction.recipient_account),
             transaction.amount,
+            transaction.currency,
             transaction.transaction_time.strftime("%Y-%m-%d %H:%M:%S"),
             transaction.transaction_type
         ])
@@ -214,6 +324,7 @@ def generate_pdf(request):
     buffer.close()
     return response
 
+@permission_classes([IsAuthenticated])
 def generate_chart_data(transactions):
     counts = {}
     for transaction in transactions:
@@ -254,6 +365,8 @@ class TransactionReceiptView(APIView):
         return HttpResponse(buffer, content_type='application/pdf')
 
 class ListReceiptsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         receipts = Receipt.objects.all()
         data = [{'transaction_id': receipt.transaction.id, 'pdf_file': receipt.pdf_file.url} for receipt in receipts]

@@ -13,10 +13,6 @@ import axios from 'axios';
 
 const apiUrl2 = 'http://localhost:8000/clients/financial-analyst/';
 
-const Header = styled(AppBar)({
-  zIndex: 1300,
-  backgroundColor: '#030E32',
-});
 
 const StyledBox = styled(Box)({
   display: 'flex',
@@ -47,10 +43,22 @@ const Analytics = () => {
   useEffect(() => {
     if (!dataLoaded) {
       Promise.all([
-        fetch(`http://localhost:8000/accounts/socials`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/credit`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/savings`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/checking`).then(response => response.json())
+        fetch(`http://localhost:8000/accounts/socials`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },}).then(response => response.json()),
+        fetch(`http://localhost:8000/accounts/credit`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },}).then(response => response.json()),
+        fetch(`http://localhost:8000/accounts/savings`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },}).then(response => response.json()),
+        fetch(`http://localhost:8000/accounts/checking`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },}).then(response => response.json())
       ])
         .then(([socialsData, creditData, savingsData, checkingData]) => {
           setAccounts([...socialsData, ...creditData, ...savingsData, ...checkingData]);
@@ -61,7 +69,10 @@ const Analytics = () => {
           setDataLoaded(true);
         });
     }
-    axios.get(`${apiUrl2}${userID}/`)
+    axios.get(`${apiUrl2}${userID}/`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },})
     .then((response) => {
       setAvatarUrl(response.data.user.avatar);
     })
@@ -75,7 +86,10 @@ const Analytics = () => {
   }, [chartType, startDate, endDate]);
 
   const fetchTransactionsByDate = () => {
-    fetch(`http://localhost:8000/transactions/date-range/?start_date=${startDate}&end_date=${endDate}`)
+    fetch(`http://localhost:8000/transactions/date-range/?start_date=${startDate}&end_date=${endDate}`,{
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },})
       .then(response => response.json())
       .then(data => setTransactionsByDate(data))
       .catch(error => console.error('Ошибка при загрузке транзакций:', error));
@@ -118,14 +132,34 @@ const Analytics = () => {
     }
   };
 
+  
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
+    });
   };
 
   return (

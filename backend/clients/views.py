@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from users.models import User
 from users.serializers import UserSerializer
-from .permissions import IsAnalyst
+from .permissions import IsAnalyst,IsDirector, IsClient
 from logging import Logger
 from rest_framework import permissions, status
 from rest_framework.permissions import AllowAny
@@ -21,32 +21,37 @@ from rest_framework.parsers import MultiPartParser
 class ClientListCreateAPIView(generics.ListCreateAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated,IsAnalyst]
 
 class ClientRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
 
 class BankDirectorRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated,IsDirector]
     queryset = BankDirector.objects.all()
     serializer_class = BankDirectorSerializer
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
 
 class FinancialAnalystRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     queryset = FinancialAnalyst.objects.all()
     serializer_class = FinancialAnalystSerializer
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = ()
+    permission_classes =[permissions.IsAuthenticated]
 
+
+class FinancialAnalystGet(APIView):
+    permission_classes = [IsAuthenticated, IsAnalyst]
+
+    def get(self, request, pk):
+        analyst = get_object_or_404(FinancialAnalyst, pk=pk)
+        serializer = FinancialAnalystSerializer(analyst)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+   
 
 
 class UserListView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         users = User.objects.exclude(role='director')
@@ -54,8 +59,7 @@ class UserListView(APIView):
         return Response(serializer.data)
 
 class UploadAvatarView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser]
 
     def post(self, request, user_id):
@@ -68,7 +72,6 @@ class UploadAvatarView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class ApproveUserView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -89,8 +92,7 @@ class ApproveUserView(APIView):
 
 
 class UpdateUserRoleView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
@@ -134,19 +136,16 @@ class UpdateUserRoleView(APIView):
         return Response({'status': 'User role updated successfully'}, status=status.HTTP_200_OK)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class DeleteUserView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
         user.delete()
         return Response({'status': 'User deleted'}, status=status.HTTP_200_OK)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class BlockUnblockUserView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
@@ -160,10 +159,8 @@ class BlockUnblockUserView(APIView):
 
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class UpdateClientView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
         client = get_object_or_404(Client, user_id=user_id)
@@ -174,8 +171,7 @@ class UpdateClientView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateFinancialAnalystView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = ()
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
         analyst = get_object_or_404(FinancialAnalyst, user_id=user_id)

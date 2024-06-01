@@ -6,18 +6,28 @@ import ClientMenu from '../../components/verticalMenu/ClientMenu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';  
 
-
 const apiUrl = 'http://localhost:8000/clients';
+
+const colors = {
+  primary: '#6A65FF',
+  secondary: '#051139',
+  third: "#082899",
+  tertiary: '#0D1849',
+  accent1: '#0976B4',
+  accent2: '#9C08FF',
+  accent3: '#00A3FF',
+};
 
 const ProfileContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   padding: 20,
-  backgroundColor: '#f5f5f5',
+  backgroundColor: colors.primary,
   borderRadius: 8,
   marginTop: 20,
   width: '100%',
+  color: 'white',
 });
 
 const ProfileCard = styled(Card)({
@@ -25,6 +35,8 @@ const ProfileCard = styled(Card)({
   maxWidth: 600,
   marginTop: 20,
   padding: 20,
+  backgroundColor: colors.third,
+  color: 'white',
 });
 
 const ProfileAvatar = styled(Avatar)({
@@ -32,11 +44,13 @@ const ProfileAvatar = styled(Avatar)({
   height: 100,
   marginBottom: 20,
   cursor: 'pointer',
+  backgroundColor: colors.accent1,
 });
 
 const HeaderAvatar = styled(Avatar)({
   width: 40,
   height: 40,
+  backgroundColor: colors.accent2,
 });
 
 const HiddenInput = styled(Input)({
@@ -52,27 +66,29 @@ const ClientProfilePage = () => {
 
   useEffect(() => {
     fetch(`${apiUrl}/${userID}/`, {
-      credentials: 'include',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },
     })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setUserData(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching user data:', error);
-        setLoading(false);
-        if (error.response && error.response.status === 403) {
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 403) {
           navigate('/forbidden');
-        } else if (error.response && error.response.status === 401) {
+        } else if (response.status === 401) {
           navigate('/login');
         }
-      });
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      setUserData(data);
+      setLoading(false);
+    })
+    .catch(error => {
+      console.error('Error fetching user data:', error);
+      setLoading(false);
+    });
   }, [userID, navigate]);
 
   const handleAvatarChange = (e) => {
@@ -84,23 +100,20 @@ const ClientProfilePage = () => {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    fetch(`http://localhost:8000/clients/upload-avatar/${userID}/`, {
-      method: 'POST',
-      body: formData,
+    axios.post(`http://localhost:8000/clients/upload-avatar/${userID}/`, formData, {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      }
     })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setUserData({ ...userData, user: { ...userData.user, avatar: data.avatar } });
-        window.location.reload();
-      })
-      .catch(error => {
-        console.error('Error uploading avatar:', error);
-      });
+    .then(response => {
+      setUserData({ ...userData, user: { ...userData.user, avatar: response.data.avatar } });
+      window.location.reload();
+    })
+    .catch(error => {
+      console.error('Error uploading avatar:', error);
+    });
   };
 
   if (loading) {
@@ -111,15 +124,33 @@ const ClientProfilePage = () => {
     return <Typography variant="h6">Пользователь не найден</Typography>;
   }
 
-
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
+    });
   };
 
   const { user, first_name, last_name, phone_number, address, income } = userData;
@@ -130,7 +161,7 @@ const ClientProfilePage = () => {
       <CssBaseline />
       <ClientMenu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
+        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: colors.secondary }}>
           <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="h6" noWrap component="div">
               Профиль
@@ -160,19 +191,19 @@ const ClientProfilePage = () => {
               <CardContent>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <Typography variant="subtitle1" color="textSecondary">Email</Typography>
+                    <Typography variant="subtitle1" color="white">Email</Typography>
                     <Typography variant="body1">{email}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" color="textSecondary">Доход</Typography>
+                    <Typography variant="subtitle1" color="white">Доход</Typography>
                     <Typography variant="body1">{income}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
+                    <Typography variant="subtitle1" color="white">Телефон</Typography>
                     <Typography variant="body1">{phone_number}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="subtitle1" color="textSecondary">Адрес</Typography>
+                    <Typography variant="subtitle1" color="white">Адрес</Typography>
                     <Typography variant="body1">{address}</Typography>
                   </Grid>
                 </Grid>

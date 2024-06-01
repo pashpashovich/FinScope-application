@@ -6,7 +6,7 @@ import axios from 'axios';
 import Menu from '../../components/verticalMenu/menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-const apiUrl = 'http://localhost:8000/clients/financial-analyst/';
+const apiUrl = 'http://localhost:8000/clients/analyst/';
 
 const ProfileContainer = styled(Box)({
   display: 'flex',
@@ -50,8 +50,10 @@ const Profile = () => {
   const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
-    axios.get(`${apiUrl}${userID}/`, {
-      withCredentials: true  
+    axios.get(`${apiUrl}${userID}/`,{
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    },
     })
     .then((response) => {
       setUserData(response.data);
@@ -78,10 +80,9 @@ const Profile = () => {
     formData.append('avatar', file);
 
     axios.post(`http://localhost:8000/clients/upload-avatar/${userID}/`, formData, {
-      withCredentials: true,
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    },
     })
     .then(response => {
       setUserData({ ...userData, user: { ...userData.user, avatar: response.data.avatar } });
@@ -100,14 +101,34 @@ const Profile = () => {
     return <Typography variant="h6">Пользователь не найден</Typography>;
   }
 
+  
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
+    });
   };
 
   const { user, first_name, last_name, phone_number, address, income, bank_department_number } = userData;

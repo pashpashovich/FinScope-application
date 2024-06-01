@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Paper, Typography, Button, AppBar, Toolbar, CssBaseline, IconButton, Avatar, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import Drawer from '@mui/material/Drawer';
-import { styled } from '@mui/material/styles';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Box, Paper, Typography, AppBar, Toolbar, CssBaseline, IconButton, Avatar, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
 import LogoutIcon from '@mui/icons-material/Logout';
-import Menu from '../../components/verticalMenu/ClientMenu';
-import TrPlot from '../../components/charts/transactionsByMonth';
-import axios from 'axios';
+import ClientMenu from '../../components/verticalMenu/ClientMenu';
+import DailyTransactionsChart from '../../components/charts/dailyTransactionChart';
+import TransactionStats from '../../components/stats/statsUserTransactions';
+import axios from "axios";
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 
-const drawerWidth = 240;
+
+const apiUrl = 'http://localhost:8000/clients';
 
 const MenuContainer = styled(Box)({
   display: 'flex',
 });
 
-const ContentContainer = styled(Box)({
+const ContentContainer = styled(Box)(({ theme }) => ({
   flexGrow: 1,
-  p: 3,
+  padding: theme.spacing(3),
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -25,131 +26,248 @@ const ContentContainer = styled(Box)({
   maxWidth: 800,
   margin: '0 auto',
   boxSizing: 'border-box',
-});
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1),
+  },
+}));
 
 const MyToolbar = styled(Toolbar)({
   color: '#051139',
 });
 
+const HeaderAvatar = styled(Avatar)({
+  width: 40,
+  height: 40,
+});
+
 const UserReportPage = () => {
   const { userID } = useParams();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [dailyTransactions, setDailyTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   useEffect(() => {
+    setLoading(true);
     Promise.all([
-        fetch(`http://localhost:8000/accounts/exact/${userID}/socials`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/exact/${userID}/credit`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/exact/${userID}/savings`).then(response => response.json()),
-        fetch(`http://localhost:8000/accounts/exact/${userID}/checking`).then(response => response.json())
-      ])
+      fetch(`http://localhost:8000/accounts/exact/${userID}/socials`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+      }).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${userID}/credit`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+      }).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${userID}/savings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+      }).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${userID}/checking`,{
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+      }).then(response => response.json())
+    ])
       .then(([socialsData, creditData, savingsData, checkingData]) => {
         const combinedAccounts = [...socialsData, ...creditData, ...savingsData, ...checkingData];
         setAccounts(combinedAccounts);
         if (combinedAccounts.length > 0 && !selectedAccount) {
-          setSelectedAccount(combinedAccounts[0].id);
+          setSelectedAccount(combinedAccounts[0].account_num);
         }
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching accounts data:', error);
+        setLoading(false);
       });
-  }, [userID, selectedAccount]); 
+
+    fetch(`${apiUrl}/${userID}/`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },
+    })
+      .then(response => {
+        if (!response.ok) {
+          if (response.status === 403) {
+            navigate('/forbidden');
+          } else if (response.status === 401) {
+            navigate('/login');
+          }
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setUserData(data);
+      })
+      .catch(error => {
+        console.error('Error fetching user data:', error);
+      });
+  }, [userID, selectedAccount, navigate]);
 
   useEffect(() => {
     if (selectedAccount && selectedMonth) {
-      axios.get(`http://localhost:8000/transactions/${selectedAccount}/${selectedMonth}/stats`)
-        .then(response => {
-          setData(response.data);
-        })
-        .catch(error => {
-          console.error('Error fetching transaction data:', error);
-        });
+      fetchTransactionData(selectedAccount, selectedMonth);
+      fetchTransactionStats(selectedAccount, selectedMonth);
     }
-    console.log(data)
   }, [selectedAccount, selectedMonth]);
 
+  const fetchTransactionData = async (account, month) => {
+    try {
+      const response = await fetch(`http://localhost:8000/transactions/${account}/${month}/daily`,{
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setDailyTransactions(data);
+    } catch (error) {
+      console.error('Error refreshing transaction data:', error);
+    }
+  };
+
+  const fetchTransactionStats = async (account, month) => {
+    try {
+      const response = await fetch(`http://localhost:8000/transactions/${account}/${month}/stats`,{
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setData(data);
+    } catch (error) {
+      console.error('Error refreshing transaction data:', error);
+    }
+  };
+
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout').then(() => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       navigate('/login');
-    }).catch(error => {
-      console.error('Error during logout:', error);
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
     });
   };
+
 
   const handleBack = () => {
     navigate(-1);
   };
 
+  if (!userData) {
+    return <CircularProgress />;
+  }
+
+  const { user, first_name} = userData;
+  const { avatar: avatarUrl } = user;
+
+  const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+  const selectedMonthName = monthNames[selectedMonth - 1];
+
+  const getCurrentDateOrEndOfMonth = (selectedMonth) => {
+    const today = new Date();
+    const year = today.getFullYear();
+    if (selectedMonth === today.getMonth() + 1) {
+      return today.getDate();
+    }
+    const lastDay = new Date(year, selectedMonth, 0).getDate();
+    return lastDay;
+  };
+
+  const displayDate = getCurrentDateOrEndOfMonth(selectedMonth);
+
   return (
     <MenuContainer>
       <CssBaseline />
+      <ClientMenu userID={userID} />
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
-        <MyToolbar>
-          <IconButton edge="start" color="inherit" onClick={handleBack}>
-            <ArrowBackIcon />
-          </IconButton>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap component="div">
             Отчетность
           </Typography>
-          <IconButton edge="end" color="inherit" onClick={handleLogout}>
-            <LogoutIcon />
-          </IconButton>
-        </MyToolbar>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <HeaderAvatar alt={first_name} src={avatarUrl || "/static/images/avatar/1.jpg"} />
+            <IconButton onClick={handleLogout}>
+              <LogoutIcon style={{ color: 'white' }} />
+            </IconButton>
+          </Box>
+        </Toolbar>
       </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: 'none', sm: 'block' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundColor: '#030E32', color: 'white' },
-        }}
-        open
-      >
-        <Menu userID={userID} />
-      </Drawer>
       <ContentContainer>
         <Toolbar />
         <Paper elevation={3} sx={{ padding: 2, width: '100%', mt: 3 }}>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Счет</InputLabel>
-            <Select
-              value={selectedAccount || ''}
-              onChange={e => setSelectedAccount(e.target.value)}
-            >
-              {accounts.map(account => (
-                <MenuItem key={account.account_num} value={account.account_num}>
-                  {account.account_num}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Месяц </InputLabel>
-            <Select
-              value={selectedMonth}
-              onChange={e => setSelectedMonth(e.target.value)}
-            >
-             {Array.from({ length: 12 }, (_, i) => (
-                <MenuItem key={i} value={i + 1}>
-                  {`${i + 1} месяц`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TrPlot data={data} />
-          <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={() => {
-            // Trigger a re-fetch of the data when the user wants to refresh the stats
-            axios.get(`http://localhost:8000/api/transactions/${selectedAccount}/${selectedMonth}/stats`)
-              .then(response => {
-                setData(response.data);
-              })
-              .catch(error => {
-                console.error('Error refreshing transaction data:', error);
-              });
-          }}>
-            Обновить данные
-          </Button>
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Счет</InputLabel>
+                <Select
+                  value={selectedAccount || ''}
+                  onChange={e => setSelectedAccount(e.target.value)}
+                >
+                  {accounts.map(account => (
+                    <MenuItem key={account.account_num} value={account.account_num}>
+                      {account.account_num}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Месяц</InputLabel>
+                <Select
+                  value={selectedMonth}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <MenuItem key={i} value={i + 1}>
+                      {`${monthNames[i]} месяц`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <DailyTransactionsChart data={dailyTransactions} />
+              <TransactionStats data={data} selectedMonthName={selectedMonthName} displayDate={displayDate} />
+            </>
+          )}
         </Paper>
       </ContentContainer>
     </MenuContainer>

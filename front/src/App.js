@@ -45,7 +45,6 @@ function App() {
                 <Route path="/account/:accountID/:userID" element={<AccountTransactionsPage />} />
                 <Route path="/analytics/:userID" element={<Analytics/>} />
                 <Route path="/analysis/:userID" element={<TransactionsReport/>} />
-                <Route path="/menu" element={<Menu/>} />
                 <Route path="/forbidden" element={<Forbidden />} />
             </Routes>
         </Router>

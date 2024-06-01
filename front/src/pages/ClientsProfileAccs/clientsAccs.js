@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, Button, ListItemSecondaryAction, IconButton, Divider, Paper, Box, AppBar, Toolbar, CssBaseline, Drawer, Avatar } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Typography, List, ListItem, ListItemText, Button, ListItemSecondaryAction, Divider, Paper, Box, AppBar, Toolbar, CssBaseline, Drawer, Avatar, IconButton, Hidden } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
-import Menu from '../../components/verticalMenu/ClientMenu';
+import ClientMenu from '../../components/verticalMenu/ClientMenu';
 import axios from 'axios';
 
 const drawerWidth = 240;
+
+const colors = {
+  primary: '#6A65FF',
+  secondary: '#051139',
+  third: "#082899",
+  tertiary: '#0D1849',
+  accent1: '#0976B4',
+  accent2: '#9C08FF',
+  accent3: '#00A3FF',
+};
 
 const MenuContainer = styled(Box)({
   display: 'flex',
@@ -15,65 +25,122 @@ const MenuContainer = styled(Box)({
 
 const ContentContainer = styled(Box)({
   flexGrow: 1,
-  p: 3,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  width: '100%',
-  maxWidth: 800,
   margin: '0 auto',
+  padding: '30px 20px 20px 20px',
   boxSizing: 'border-box',
 });
 
-const MyToolbar = styled(Toolbar)({
-  color: '#051139',
-});
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  width: '100%',
+  maxWidth: 800,
+  backgroundColor: colors.primary,
+  color: 'white',
+  borderRadius: '8px',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1),
+  },
+}));
 
-const ClientProfilePage = () => {
+const ClientAccsPage = () => {
   const { userID } = useParams();
   const [clientInfo, setClientInfo] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
   useEffect(() => {
-    fetch(`http://localhost:8000/clients/${userID}`)
-      .then(response => response.json())
+    fetch(`http://localhost:8000/clients/${userID}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+      .then(response => {
+        if (!response.ok) {
+          if (response.status === 403) {
+            navigate('/forbidden');
+          } else if (response.status === 401) {
+            navigate('/login');
+          }
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => setClientInfo(data))
       .catch(error => console.error(error));
 
     Promise.all([
-      fetch(`http://localhost:8000/accounts/exact/${userID}/socials`).then(response => response.json()),
-      fetch(`http://localhost:8000/accounts/exact/${userID}/credit`).then(response => response.json()),
-      fetch(`http://localhost:8000/accounts/exact/${userID}/savings`).then(response => response.json()),
-      fetch(`http://localhost:8000/accounts/exact/${userID}/checking`).then(response => response.json())
+      fetch(`http://localhost:8000/accounts/exact/${userID}/socials`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${userID}/credit`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${userID}/savings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }).then(response => response.json()),
+      fetch(`http://localhost:8000/accounts/exact/${userID}/checking`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }).then(response => response.json())
     ])
       .then(([socialsData, creditData, savingsData, checkingData]) => {
         setAccounts([...socialsData, ...creditData, ...savingsData, ...checkingData]);
       });
-  }, [userID]);
+  }, [userID, navigate]);
 
   const handleDetailsClick = (accountId) => {
     navigate(`/ClAccs/${accountId}/${userID}`);
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const handleLogout = () => {
-    axios.post('http://localhost:8000/api/logout', {},)
-      .then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
-      })
-      .catch((error) => console.error('Error during logout:', error));
+    axios.post(
+      'http://localhost:8000/api/logout',
+      {
+        refresh_token: localStorage.getItem('refreshToken'),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(response => {
+      if (response.status !== 200) {
+        console.log(localStorage.getItem('refreshToken'));
+        return;
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    })
+    .catch(error => {
+      console.error(error);
+      console.log(localStorage.getItem('refreshToken'));
+    });
   };
 
   return (
     <MenuContainer>
       <CssBaseline />
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
+      <ClientMenu userID={userID} />
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: colors.secondary }}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap component="div">
             Счета
@@ -83,7 +150,7 @@ const ClientProfilePage = () => {
               <Avatar
                 alt={clientInfo.first_name}
                 src={clientInfo.user.avatar || "/static/images/avatar/1.jpg"}
-                sx={{ width: 40, height: 40 }}
+                sx={{ width: 40, height: 40, backgroundColor: colors.accent2 }}
               />
             )}
             <IconButton onClick={handleLogout}>
@@ -92,29 +159,16 @@ const ClientProfilePage = () => {
           </Box>
         </Toolbar>
       </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: 'none', sm: 'block' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundColor: '#030E32', color: 'white' },
-        }}
-        open
-      >
-        <Menu userID={userID} />
-      </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}>
         <Toolbar />
         <ContentContainer>
-          <Paper elevation={3} sx={{ padding: 2, width: '100%' }}>
-            <IconButton onClick={handleBack} sx={{ marginBottom: 1 }}>
-              <ArrowBackIcon /> Назад
-            </IconButton>
+          <StyledPaper elevation={3}>
             {clientInfo && (
               <Box sx={{ marginBottom: 2, textAlign: 'center' }}>
                 <Avatar
                   alt={clientInfo.first_name}
                   src={clientInfo.user.avatar || "/static/images/avatar/1.jpg"}
-                  sx={{ width: 120, height: 120, margin: '0 auto', marginBottom: 2 }}
+                  sx={{ width: 120, height: 120, margin: '0 auto', marginBottom: 2, backgroundColor: colors.accent1 }}
                 />
                 <Typography variant="h5" gutterBottom>
                   {clientInfo.first_name} {clientInfo.last_name}
@@ -130,7 +184,7 @@ const ClientProfilePage = () => {
                 </Typography>
               </Box>
             )}
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h5" gutterBottom style={{ textAlign: 'center' }}>
               Счета клиента
             </Typography>
             <List>
@@ -142,18 +196,18 @@ const ClientProfilePage = () => {
                       secondary={`Баланс: ${account.account_balance} ${account.currency}`}
                     />
                     <ListItemSecondaryAction>
-                      <Button onClick={() => handleDetailsClick(account.account_num)}>Подробнее</Button>
+                      <Button onClick={() => handleDetailsClick(account.account_num)} style={{ color: colors.third }}>Подробнее</Button>
                     </ListItemSecondaryAction>
                   </ListItem>
                   <Divider />
                 </Box>
               ))}
             </List>
-          </Paper>
+          </StyledPaper>
         </ContentContainer>
       </Box>
     </MenuContainer>
   );
 };
 
-export default ClientProfilePage;
+export default ClientAccsPage;

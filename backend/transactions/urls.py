@@ -10,5 +10,7 @@ urlpatterns = [
     path('receipts/', views.ListReceiptsView.as_view(), name='list-receipts'),
     path('boxplot/', views.boxplot_data, name='boxplot_data'),
     path('<str:account_num>/<int:month>/stats/', views.AccountTransactionStats.as_view(), name='account-transaction-stats'),
+    path('<int:account_num>/<int:month>/daily/', views.AccountDailyTransactionStats.as_view(), name='account-daily-transaction-stats'),
+    path('stats/', views.AllClientsTransactionStats.as_view(), name='all-clients-transaction-stats'),
 
 ]

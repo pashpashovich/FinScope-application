@@ -81,15 +81,6 @@ const BankDirectorMenu = ({ userID }) => {
           <ListItemText primary="Отчетность" />
         </ListItemStyled>
       </List>
-      <Divider />
-      <List>
-        <ListItemStyled button onClick={() => console.log('Logout')}>
-          <ListItemIcon>
-            <LogoutIcon style={{ color: 'white' }} />
-          </ListItemIcon>
-          <ListItemText primary="Выход" />
-        </ListItemStyled>
-      </List>
     </>
   );
 
