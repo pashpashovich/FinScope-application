@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
 import { Box, FormControl, InputLabel, Select, MenuItem, TextField, Button } from '@mui/material';
+import { styled } from '@mui/system';
+
+
+const MyButton = styled(Button)({
+  background: '#6a65ff',
+  ':hover': {
+    background: '#5a55e0', 
+  },
+});
 
 const BoxPlotChart = ({ startDate, endDate, transactionType, setStartDate, setEndDate, setTransactionType }) => {
   const [plotData, setPlotData] = useState([]);
@@ -60,9 +69,9 @@ const BoxPlotChart = ({ startDate, endDate, transactionType, setStartDate, setEn
             <MenuItem value="deposit">Начисление</MenuItem>
           </Select>
         </FormControl>
-        <Button variant="contained" color="primary" onClick={fetchBoxPlotData}>
+        <MyButton variant="contained" color="primary" onClick={fetchBoxPlotData}>
           Применить
-        </Button>
+        </MyButton>
       </Box>
       {plotData.length > 0 && (
         <Plot

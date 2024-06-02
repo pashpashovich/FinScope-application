@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField, Button, Container } from '@mui/material';
 import Chart from 'chart.js/auto';
+import { styled } from '@mui/system';
+
+
+const MyButton = styled(Button)({
+    background: '#6a65ff',
+    ':hover': {
+      background: '#5a55e0', 
+    },
+  });
 
 const groupTransactionsByDate = (transactions) => {
     const counts = {};
 
     transactions.forEach(transaction => {
-        const date = transaction.transaction_time.split('T')[0]; // Получаем только дату
+        const date = transaction.transaction_time.split('T')[0]; 
         if (!counts[date]) {
             counts[date] = 0;
         }
@@ -25,6 +34,7 @@ const TransactionsByDateChart = ({ transactions, startDate, endDate, setStartDat
     useEffect(() => {
         if (startDate && endDate) {
             fetchTransactionsByDate();
+
         }
     }, [startDate, endDate]);
 
@@ -88,9 +98,9 @@ const TransactionsByDateChart = ({ transactions, startDate, endDate, setStartDat
                     InputLabelProps={{ shrink: true }}
                     sx={{ marginRight: 2 }}
                 />
-                <Button variant="contained" color="primary" onClick={handleFilter}>
+                <MyButton variant="contained" onClick={handleFilter}>
                     Применить
-                </Button>
+                </MyButton>
             </Box>
             <canvas id="transactionsByDateChart"></canvas>
         </Container>

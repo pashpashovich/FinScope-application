@@ -30,7 +30,9 @@ from rest_framework.decorators import api_view, permission_classes
 from .api import get_сonvert
 from clients.permissions import IsAnalyst,IsClient,IsDirector
 import io
-
+from django.db.models import Count
+from datetime import timedelta
+from django.utils.timezone import make_aware
 
 
 class AllClientsTransactionStats(APIView):
@@ -175,6 +177,9 @@ class TransactionsByDateRangeAPIView(APIView):
             start_date = parse_datetime(start_date).astimezone(pytz.UTC)
         if end_date:
             end_date = parse_datetime(end_date).astimezone(pytz.UTC)
+        
+        end_date += timedelta(days=1)
+
 
         transactions = Transaction.objects.filter(transaction_time__range=[start_date, end_date])
         serializer = TransactionSerializer(transactions, many=True)
@@ -397,6 +402,88 @@ def boxplot_data(request):
     }
 
     return JsonResponse(boxplot_data)
+
+class MaxTransactionsPerDay(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({'error': 'Both start_date and end_date are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        start_date = make_aware(parse_datetime(start_date_str), pytz.UTC)
+        end_date = make_aware(parse_datetime(end_date_str), pytz.UTC)
+
+        if not start_date or not end_date:
+            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+        transactions = Transaction.objects.filter(transaction_time__date__range=(start_date, end_date))
+
+        def convert_to_byn(transaction):
+            amount_in_byn = Decimal(get_сonvert(transaction.amount, transaction.currency, 'BYN')).quantize(Decimal('0.01'))
+            return {'date': transaction.transaction_time.date(), 'amount': amount_in_byn}
+
+        transfers = [convert_to_byn(t) for t in transactions.filter(transaction_type='transfer')]
+        withdrawals = [convert_to_byn(t) for t in transactions.filter(transaction_type='withdrawal')]
+        deposits = [convert_to_byn(t) for t in transactions.filter(transaction_type='deposit')]
+
+        max_transfers = {}
+        max_withdrawals = {}
+        max_deposits = {}
+
+        for transfer in transfers:
+            date = transfer['date']
+            amount = transfer['amount']
+            if date not in max_transfers or amount > max_transfers[date]:
+                max_transfers[date] = amount
+
+        for withdrawal in withdrawals:
+            date = withdrawal['date']
+            amount = withdrawal['amount']
+            if date not in max_withdrawals or amount > max_withdrawals[date]:
+                max_withdrawals[date] = amount
+
+        for deposit in deposits:
+            date = deposit['date']
+            amount = deposit['amount']
+            if date not in max_deposits or amount > max_deposits[date]:
+                max_deposits[date] = amount
+
+        dates = sorted(set(max_transfers.keys()) | set(max_withdrawals.keys()) | set(max_deposits.keys()))
+
+        data = {
+            'dates': dates,
+            'max_transfers': [max_transfers.get(date, 0) for date in dates],
+            'max_withdrawals': [max_withdrawals.get(date, 0) for date in dates],
+            'max_deposits': [max_deposits.get(date, 0) for date in dates],
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+class TransactionCountByType(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if not start_date or not end_date:
+            return Response({'error': 'Both start_date and end_date are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        start_date = parse_date(start_date)
+        end_date = parse_date(end_date)
+
+        if not start_date or not end_date:
+            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+
+        transactions = Transaction.objects.filter(transaction_time__date__range=(start_date, end_date))
+        counts = transactions.values('transaction_type').annotate(count=Count('transaction_type'))
+        data = {item['transaction_type']: item['count'] for item in counts}
+        return Response(data, status=status.HTTP_200_OK)
 
 
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { Box, AppBar, Avatar, Toolbar, IconButton, Typography, CssBaseline, MenuItem, Select, FormControl, InputLabel, Container } from '@mui/material';
 import { styled } from '@mui/system';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -8,11 +8,13 @@ import AccountDistributionChart from '../../components/charts/accTypes';
 import TransactionsByDateChart from '../../components/charts/transactionsByDateChart';
 import ClientsAccountsChart from "../../components/charts/clientsAccountsChart";
 import BoxPlotChart from '../../components/charts/boxPlotCharts'; 
+import ClientsIncomeAccountsChart from '../../components/charts/ClientsIncomeAccountsChart';
+import MaxTransactionsChart from '../../components/charts/MaxTransactionsChart'; 
+import TransactionTypePieChart from '../../components/charts/TransactionTypePieChart'; 
 import LogoutIcon from '@mui/icons-material/Logout';
 import axios from 'axios';
 
 const apiUrl2 = 'http://localhost:8000/clients/financial-analyst/';
-
 
 const StyledBox = styled(Box)({
   display: 'flex',
@@ -127,6 +129,12 @@ const Analytics = () => {
             setTransactionType={setTransactionType}
           />
         );
+      case 'clientsIncomeAccounts':
+        return <ClientsIncomeAccountsChart />;
+      case 'maxTransactions':
+        return <MaxTransactionsChart />;
+      case 'transactionTypePieChart':
+        return <TransactionTypePieChart />;
       default:
         return <Typography variant="h6">Пожалуйста, выберите тип графика</Typography>;
     }
@@ -194,7 +202,10 @@ const Analytics = () => {
                   <MenuItem value="accountDistribution">Распределение счетов</MenuItem>
                   <MenuItem value="transactionsByDate">Транзакции по дате</MenuItem>
                   <MenuItem value="clientsAccounts">Доходы клиентов и балансы их счетов</MenuItem>
-                  <MenuItem value="boxPlotChart">Коробчатый график транзакций</MenuItem> {/* новый пункт меню */}
+                  <MenuItem value="boxPlotChart">Коробчатый график транзакций</MenuItem>
+                  <MenuItem value="clientsIncomeAccounts">Доходы клиентов и количество счетов</MenuItem>
+                  <MenuItem value="maxTransactions">Максимальные транзакции по дням</MenuItem>
+                  <MenuItem value="transactionTypePieChart">Количество транзакций по типам</MenuItem> {/* новый пункт меню */}
                 </Select>
               </FormControl>
             </Box>

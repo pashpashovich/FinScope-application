@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 
-const apiUrl = 'http://localhost:8000/accounts/clients-accounts/';
+const apiUrl = 'http://localhost:8000/accounts/clients-income-accounts/';
 
-const ClientsAccountsChart = () => {
+const ClientsIncomeAccountsChart = () => {
     const [chartData, setChartData] = useState({ datasets: [] });
 
     useEffect(() => {
@@ -13,14 +13,15 @@ const ClientsAccountsChart = () => {
             .then(data => {
                 const scatterData = data.map(item => ({
                     x: item.income,
-                    y: item.account_balance
+                    y: item.account_count
                 }));
+            console.log(data)
 
                 setChartData({
                     datasets: [{
-                        label: 'Доход vs Баланс счета',
+                        label: 'Доход vs Количество счетов',
                         data: scatterData,
-                        backgroundColor: 'rgba(75,192,192,1)',
+                        backgroundColor: 'rgba(153,102,255,1)',
                     }]
                 });
             })
@@ -40,7 +41,7 @@ const ClientsAccountsChart = () => {
             y: {
                 title: {
                     display: true,
-                    text: 'Баланс счета'
+                    text: 'Количество счетов'
                 }
             }
         }
@@ -53,4 +54,4 @@ const ClientsAccountsChart = () => {
     );
 };
 
-export default ClientsAccountsChart;
+export default ClientsIncomeAccountsChart;

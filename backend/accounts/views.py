@@ -131,6 +131,22 @@ def clients_accounts_data(request):
             })
     return JsonResponse(data, safe=False)
 
+@permission_classes([IsAuthenticated])
+def clients_accounts_num(request):
+    data = []
+    clients = Client.objects.all()
+    for client in clients:
+        accounts = client.accounts.all()
+        numOfAccs=0
+        for account in accounts:
+            numOfAccs+=1
+        data.append({
+            'client_id': client.user.id,
+            'income': float(client.income),
+            'account_count': float(numOfAccs),
+        })
+    return JsonResponse(data, safe=False)
+
 
 
 

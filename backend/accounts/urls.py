@@ -23,6 +23,8 @@ urlpatterns = [
     path('checking/', views.CheckingAccountListAPIView.as_view(),
          name='account-list-checking'),
      path('clients-accounts/', views.clients_accounts_data, name='clients_accounts_data'),
+     path('clients-income-accounts/', views.clients_accounts_num, name='clients_accounts_income'),
+
     path('convert/<str:account_balance>/<str:from_currency>/<str:to_currency>/', views.CurrencyConversionView.as_view(), name='currency-conversion'),
 
 

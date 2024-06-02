@@ -39,13 +39,10 @@ class FinancialAnalystRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     permission_classes =[permissions.IsAuthenticated]
 
 
-class FinancialAnalystGet(APIView):
-    permission_classes = [IsAuthenticated, IsAnalyst]
-
-    def get(self, request, pk):
-        analyst = get_object_or_404(FinancialAnalyst, pk=pk)
-        serializer = FinancialAnalystSerializer(analyst)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class FinancialAnalystGet(generics.RetrieveUpdateAPIView):
+    queryset = FinancialAnalyst.objects.all()
+    serializer_class = FinancialAnalystSerializer
+    permission_classes =[permissions.IsAuthenticated,IsAnalyst]
 
    
 
