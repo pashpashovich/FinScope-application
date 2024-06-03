@@ -383,7 +383,7 @@ const UserManagementPage = () => {
               noWrap
               component="div"
             >
-              Анализ
+              Пользователи
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <HeaderAvatar

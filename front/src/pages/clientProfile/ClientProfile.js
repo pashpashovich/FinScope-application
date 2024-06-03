@@ -8,22 +8,13 @@ import axios from 'axios';
 
 const apiUrl = 'http://localhost:8000/clients';
 
-const colors = {
-  primary: '#6A65FF',
-  secondary: '#051139',
-  third: "#082899",
-  tertiary: '#0D1849',
-  accent1: '#0976B4',
-  accent2: '#9C08FF',
-  accent3: '#00A3FF',
-};
 
 const ProfileContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   padding: 20,
-  backgroundColor: colors.primary,
+  backgroundColor: '#f5f5f5',
   borderRadius: 8,
   marginTop: 20,
   width: '100%',
@@ -35,7 +26,6 @@ const ProfileCard = styled(Card)({
   maxWidth: 600,
   marginTop: 20,
   padding: 20,
-  backgroundColor: colors.third,
   color: 'white',
 });
 
@@ -44,13 +34,11 @@ const ProfileAvatar = styled(Avatar)({
   height: 100,
   marginBottom: 20,
   cursor: 'pointer',
-  backgroundColor: colors.accent1,
 });
 
 const HeaderAvatar = styled(Avatar)({
   width: 40,
   height: 40,
-  backgroundColor: colors.accent2,
 });
 
 const HiddenInput = styled(Input)({
@@ -161,7 +149,7 @@ const ClientProfilePage = () => {
       <CssBaseline />
       <ClientMenu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: colors.secondary }}>
+        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32'  }}>
           <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="h6" noWrap component="div">
               Профиль
@@ -185,26 +173,26 @@ const ClientProfilePage = () => {
               />
             </label>
             <HiddenInput id="avatar-upload" type="file" onChange={handleAvatarChange} />
-            <Typography variant="h4">{`${first_name} ${last_name}`}</Typography>
+            <Typography color="black" variant="h4">{`${first_name} ${last_name}`}</Typography>
             <Typography variant="h6" color="textSecondary">{role}</Typography>
             <ProfileCard>
               <CardContent>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <Typography variant="subtitle1" color="white">Email</Typography>
-                    <Typography variant="body1">{email}</Typography>
+                    <Typography variant="subtitle1" color="textSecondary">Email</Typography>
+                    <Typography color="black" variant="body1">{email}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" color="white">Доход</Typography>
-                    <Typography variant="body1">{income}</Typography>
+                    <Typography variant="subtitle1" color="textSecondary">Доход</Typography>
+                    <Typography color="black" variant="body1">{income}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle1" color="white">Телефон</Typography>
-                    <Typography variant="body1">{phone_number}</Typography>
+                    <Typography variant="subtitle1" color="textSecondary">Телефон</Typography>
+                    <Typography color="black" variant="body1">{phone_number}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="subtitle1" color="white">Адрес</Typography>
-                    <Typography variant="body1">{address}</Typography>
+                    <Typography variant="subtitle1" color="textSecondary">Адрес</Typography>
+                    <Typography color="black" variant="body1">{address}</Typography>
                   </Grid>
                 </Grid>
               </CardContent>

@@ -9,16 +9,6 @@ import axios from 'axios';
 
 const drawerWidth = 240;
 
-const colors = {
-  primary: '#6A65FF',
-  secondary: '#051139',
-  third: "#082899",
-  tertiary: '#0D1849',
-  accent1: '#0976B4',
-  accent2: '#9C08FF',
-  accent3: '#00A3FF',
-};
-
 const MenuContainer = styled(Box)({
   display: 'flex',
 });
@@ -37,8 +27,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   width: '100%',
   maxWidth: 800,
-  backgroundColor: colors.primary,
-  color: 'white',
+  color: 'black',
   borderRadius: '8px',
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(1),
@@ -140,7 +129,7 @@ const ClientAccsPage = () => {
     <MenuContainer>
       <CssBaseline />
       <ClientMenu userID={userID} />
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: colors.secondary }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: '#030E32' }}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap component="div">
             Счета
@@ -150,7 +139,7 @@ const ClientAccsPage = () => {
               <Avatar
                 alt={clientInfo.first_name}
                 src={clientInfo.user.avatar || "/static/images/avatar/1.jpg"}
-                sx={{ width: 40, height: 40, backgroundColor: colors.accent2 }}
+                sx={{ width: 40, height: 40 }}
               />
             )}
             <IconButton onClick={handleLogout}>
@@ -168,7 +157,7 @@ const ClientAccsPage = () => {
                 <Avatar
                   alt={clientInfo.first_name}
                   src={clientInfo.user.avatar || "/static/images/avatar/1.jpg"}
-                  sx={{ width: 120, height: 120, margin: '0 auto', marginBottom: 2, backgroundColor: colors.accent1 }}
+                  sx={{ width: 120, height: 120, margin: '0 auto', marginBottom: 2 }}
                 />
                 <Typography variant="h5" gutterBottom>
                   {clientInfo.first_name} {clientInfo.last_name}
@@ -196,7 +185,7 @@ const ClientAccsPage = () => {
                       secondary={`Баланс: ${account.account_balance} ${account.currency}`}
                     />
                     <ListItemSecondaryAction>
-                      <Button onClick={() => handleDetailsClick(account.account_num)} style={{ color: colors.third }}>Подробнее</Button>
+                      <Button onClick={() => handleDetailsClick(account.account_num)}>Подробнее</Button>
                     </ListItemSecondaryAction>
                   </ListItem>
                   <Divider />

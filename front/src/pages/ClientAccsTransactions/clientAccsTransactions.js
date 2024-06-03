@@ -17,23 +17,13 @@ axios.defaults.withCredentials = true;
 
 const drawerWidth = 240;
 
-const colors = {
-  primary: '#6A65FF',
-  secondary: '#051139',
-  third: "#082899",
-  tertiary: '#0D1849',
-  accent1: '#0976B4',
-  accent2: '#9C08FF',
-  accent3: '#00A3FF',
-};
 
 const FormContainer = styled(Paper)({
   padding: 20,
   maxWidth: 800,
   margin: 'auto',
   marginTop: 20,
-  backgroundColor: colors.primary,
-  color: 'white',
+  color: 'black',
   '@media (max-width: 600px)': {
     padding: 10,
     marginTop: 10,
@@ -43,7 +33,6 @@ const FormContainer = styled(Paper)({
 const HeaderAvatar = styled(Avatar)({
   width: 40,
   height: 40,
-  backgroundColor: colors.accent2,
 });
 
 const MenuContainer = styled(Box)({
@@ -63,8 +52,10 @@ const ContentContainer = styled(Box)({
 });
 
 const CustomButton = styled(Button)({
-  backgroundColor: colors.third,
-  color: 'white',
+  background: '#6a65ff',
+    ':hover': {
+        background: '#5a55e0',
+    },
 });
 
 const handleRequestError = (error, navigate) => {
@@ -329,7 +320,7 @@ const AccountTransactionsPage = () => {
         <ContentContainer>
           <FormContainer elevation={3}>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
-              <IconButton onClick={handleBack} sx={{ color: 'white' }}>
+              <IconButton onClick={handleBack} sx={{ color: '#6a65ff' }}>
                 <ArrowBackIcon />
               </IconButton>
               <Typography variant="h6" sx={{ flexGrow: 1 }}>

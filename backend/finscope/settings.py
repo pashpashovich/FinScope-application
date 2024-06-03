@@ -3,12 +3,17 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+import django_heroku
+from dotenv import load_dotenv
+load_dotenv()
+
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-SECRET_KEY = 'django-insecure-2j!*1l8#2r*x6%d&1d)^(sn8=-o!hm94f%*cxk^9zne(l^2m9r'
+SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -35,6 +40,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -139,3 +145,4 @@ SIMPLE_JWT = {
 
 }
 
+django_heroku.settings(locals())
