@@ -10,7 +10,7 @@ import EditClietnPage from './pages/EditClient/EditClient';
 import AccountTransactionsPage from './pages/AccountTransactions/AccountTransactionsPage';
 import Analytics from "./pages/Analytics/alalytics";
 import TransactionsReport from "./pages/Reports/accountReport";
-import Menu from "./components/verticalMenu/menu";
+import TransactionsReportDir from "./pages/Reports/accountReportDir";
 import Forbidden from './pages/forbidden/forbidden'
 import DirectorProfilePage from './pages/directorProfilePage/directorProfilePage'
 import DirectorUser from './pages/manageUsers/manageUsers'
@@ -38,6 +38,7 @@ function App() {
                 <Route path="/ClAccs/:userID" element={<ClientsAccPage/> }></Route>
                 <Route path="/ClAccs/:accountID/:userID" element={<ClientsAccTrPage/> }></Route>
                 <Route path="/director/users/:userID" element={<DirectorUser/> }></Route>
+                <Route path="/director/reports/:userID" element={<TransactionsReportDir/> }></Route>
                 <Route path="/data/:userID" element={<ClientsPage/>}></Route>
                 <Route path="/login/client/:clientId/:userID" element={<ClientsAccountPage />} />
                 <Route path="/client/edit/:clientId/:userID" element={<EditClietnPage />} />

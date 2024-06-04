@@ -30,36 +30,33 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import axios from "axios";
 import { styled } from "@mui/system";
 
-
 const apiUrl = "http://localhost:8000/clients";
 const apiUrl2 = "http://localhost:8000/clients/bank-director/";
 
-
 const Header = styled(AppBar)({
-    zIndex: 1300,
-    backgroundColor: "#030E32",
-  });
+  zIndex: 1300,
+  backgroundColor: "#030E32",
+});
 
-  const MyButton = styled(Button)({
-    background: "#6a65ff",
-    ":hover": {
-      background: "#5a55e0",
-    },
-  });
+const MyButton = styled(Button)({
+  background: "#6a65ff",
+  ":hover": {
+    background: "#5a55e0",
+  },
+});
 
 const MyToolbar = styled(Toolbar)({
-    display: "flex",
-    justifyContent: "space-between",
-    "@media (max-width: 600px)": {
-      flexWrap: "wrap",
-    },
-  });
+  display: "flex",
+  justifyContent: "space-between",
+  "@media (max-width: 600px)": {
+    flexWrap: "wrap",
+  },
+});
 
-  const HeaderAvatar = styled(Avatar)({
-    width: 40,
-    height: 40,
-  });
-  
+const HeaderAvatar = styled(Avatar)({
+  width: 40,
+  height: 40,
+});
 
 const UserManagementPage = () => {
   const { userID } = useParams();
@@ -89,9 +86,7 @@ const UserManagementPage = () => {
           navigate('/login'); 
         }
       });
-
-
-  },[]);
+  }, [userID, navigate]);
 
   const fetchUsers = useCallback(() => {
     fetch(`${apiUrl}/users`, {
@@ -109,8 +104,13 @@ const UserManagementPage = () => {
         setUsers(data);
         data.forEach((user) => fetchUserDetails(user.id, user.role));
       })
-      .catch((error) => console.error("Error fetching users:", error));
-  }, []);
+      .catch((error) => {
+        console.error("Error fetching users:", error);
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
+  }, [navigate]);
 
   const fetchCurrentUser = useCallback(() => {
     axios
@@ -120,14 +120,19 @@ const UserManagementPage = () => {
         },
       })
       .then((response) => setUserData(response.data))
-      .catch((error) => console.error("Error fetching user data:", error));
-  }, [userID]);
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
+  }, [userID, navigate]);
 
   useEffect(() => {
     fetchUsers();
     fetchCurrentUser();
     fetchAvatar();
-  }, [fetchUsers, fetchCurrentUser,fetchAvatar]);
+  }, [fetchUsers, fetchCurrentUser, fetchAvatar]);
 
   const fetchUserDetails = (userId, role) => {
     let endpoint = "";
@@ -138,7 +143,7 @@ const UserManagementPage = () => {
     }
 
     if (endpoint) {
-      fetch(endpoint,{
+      fetch(endpoint, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
@@ -155,7 +160,12 @@ const UserManagementPage = () => {
             [userId]: data,
           }));
         })
-        .catch((error) => console.error("Error fetching user details:", error));
+        .catch((error) => {
+          console.error("Error fetching user details:", error);
+          if (error.response && error.response.status === 401) {
+            navigate('/login');
+          }
+        });
     } else {
       setUserDetails((prevState) => ({
         ...prevState,
@@ -202,16 +212,22 @@ const UserManagementPage = () => {
           users.map((user) => (user.id === userId ? { ...user, role } : user))
         );
         fetchUserDetails(userId, role);
+        window.location.reload();
       })
-      .catch((error) => console.error("Error updating role:", error));
+      .catch((error) => {
+        console.error("Error updating role:", error);
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
   };
 
   const handleDelete = (userId) => {
     fetch(`${apiUrl}/delete-user/${userId}/`, {
       method: "DELETE",
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-      }
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
     })
       .then((response) => {
         if (!response.ok) {
@@ -220,7 +236,12 @@ const UserManagementPage = () => {
         return response.json();
       })
       .then(() => setUsers(users.filter((user) => user.id !== userId)))
-      .catch((error) => console.error("Error deleting user:", error));
+      .catch((error) => {
+        console.error("Error deleting user:", error);
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
   };
 
   const handleBlockUnblock = (userId, action) => {
@@ -247,9 +268,12 @@ const UserManagementPage = () => {
           )
         )
       )
-      .catch((error) =>
-        console.error("Error blocking/unblocking user:", error)
-      );
+      .catch((error) => {
+        console.error("Error blocking/unblocking user:", error);
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
   };
 
   const handleInputChange = (e, userId) => {
@@ -300,8 +324,7 @@ const UserManagementPage = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
       body: JSON.stringify(data),
     })
@@ -311,7 +334,12 @@ const UserManagementPage = () => {
         }
         return response.json();
       })
-      .catch((error) => console.error("Error saving details:", error));
+      .catch((error) => {
+        console.error("Error saving details:", error);
+        if (error.response && error.response.status === 401) {
+          navigate('/login');
+        }
+      });
   };
 
   const handleLogout = () => {
@@ -375,7 +403,7 @@ const UserManagementPage = () => {
       <CssBaseline />
       <BankDirectorMenu userID={userID} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-      <Header position="fixed">
+        <Header position="fixed">
           <MyToolbar>
             <Typography
               style={{ color: "white" }}

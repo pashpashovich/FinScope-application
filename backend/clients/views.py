@@ -99,16 +99,30 @@ class UpdateUserRoleView(APIView):
         if new_role not in ['client', 'analyst', 'director']:
             return Response({'error': 'Invalid role'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if new_role == current_role:
-            return Response({'status': 'Role is unchanged'}, status=status.HTTP_200_OK)
-
-        if current_role == 'client':
-            Client.objects.filter(user=user).delete()
-        elif current_role == 'analyst':
-            FinancialAnalyst.objects.filter(user=user).delete()
-
         if new_role == 'client':
-            if not Client.objects.filter(user=user).exists():
+            client, created = Client.objects.get_or_create(user=user)
+            client.first_name = request.data.get('first_name', user.first_name)
+            client.last_name = request.data.get('last_name', user.last_name)
+            client.income = request.data.get('income', client.income)
+            client.phone_number = request.data.get('phone_number', client.phone_number)
+            client.address = request.data.get('address', client.address)
+            client.save()
+        
+        elif new_role == 'analyst':
+            analyst, created = FinancialAnalyst.objects.get_or_create(user=user)
+            analyst.first_name = request.data.get('first_name', user.first_name)
+            analyst.last_name = request.data.get('last_name', user.last_name)
+            analyst.bank_department_number = request.data.get('bank_department_number', analyst.bank_department_number)
+            analyst.phone_number = request.data.get('phone_number', analyst.phone_number)
+            analyst.save()
+        
+        if new_role != current_role:
+            if current_role == 'client':
+                Client.objects.filter(user=user).delete()
+            elif current_role == 'analyst':
+                FinancialAnalyst.objects.filter(user=user).delete()
+
+            if new_role == 'client':
                 Client.objects.create(
                     user=user,
                     first_name=request.data.get('first_name', user.first_name),
@@ -117,8 +131,7 @@ class UpdateUserRoleView(APIView):
                     phone_number=request.data.get('phone_number', ''),
                     address=request.data.get('address', '')
                 )
-        elif new_role == 'analyst':
-            if not FinancialAnalyst.objects.filter(user=user).exists():
+            elif new_role == 'analyst':
                 FinancialAnalyst.objects.create(
                     user=user,
                     first_name=request.data.get('first_name', user.first_name),
@@ -126,7 +139,7 @@ class UpdateUserRoleView(APIView):
                     bank_department_number=request.data.get('bank_department_number', ''),
                     phone_number=request.data.get('phone_number', '')
                 )
-
+        
         user.role = new_role
         user.save()
 

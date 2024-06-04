@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Paper, Typography, AppBar, Toolbar, CssBaseline, IconButton, Avatar, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, AppBar, Toolbar, CssBaseline, IconButton, Avatar, FormControl, InputLabel, Select, MenuItem, CircularProgress, Button } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ClientMenu from '../../components/verticalMenu/ClientMenu';
@@ -9,8 +9,8 @@ import TransactionStats from '../../components/stats/statsUserTransactions';
 import axios from "axios";
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
-
 const apiUrl = 'http://localhost:8000/clients';
+const pdfUrl = 'http://localhost:8000/transactions/generate-pdf-client/';
 
 const MenuContainer = styled(Box)({
   display: 'flex',
@@ -50,6 +50,8 @@ const UserReportPage = () => {
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [downloading, setDownloading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -185,9 +187,39 @@ const UserReportPage = () => {
     });
   };
 
-
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const downloadPDF = () => {
+    if (!selectedAccount) {
+      setErrorMessage("Выберите счет для скачивания отчета");
+      return;
+    }
+
+    setDownloading(true);
+    const params = new URLSearchParams({
+      account: selectedAccount,
+      month: selectedMonth,
+    }).toString();
+
+    fetch(`${pdfUrl}?${params}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },
+    })
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "user_report.pdf");
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+      })
+      .catch((error) => console.error("Error downloading PDF:", error))
+      .finally(() => setDownloading(false));
   };
 
   if (!userData) {
@@ -259,13 +291,23 @@ const UserReportPage = () => {
                 >
                   {Array.from({ length: 12 }, (_, i) => (
                     <MenuItem key={i} value={i + 1}>
-                      {`${monthNames[i]} месяц`}
+                      {`${monthNames[i]}`}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <DailyTransactionsChart data={dailyTransactions} />
               <TransactionStats data={data} selectedMonthName={selectedMonthName} displayDate={displayDate} />
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <Button variant="contained" color="primary" onClick={downloadPDF} disabled={downloading}>
+                  {downloading ? "Загрузка..." : "Скачать отчет в PDF"}
+                </Button>
+              </Box>
+              {errorMessage && (
+                <Typography color="error" sx={{ mt: 2 }}>
+                  {errorMessage}
+                </Typography>
+              )}
             </>
           )}
         </Paper>

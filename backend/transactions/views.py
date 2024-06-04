@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, generics
+from rest_framework import status, generics, serializers
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.dateparse import parse_datetime, parse_date
 from django.http import HttpResponse, JsonResponse
@@ -24,7 +24,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from .models import Transaction, Receipt
+from .models import Transaction, Receipt,Account
 from .serializers import TransactionSerializer
 from rest_framework.decorators import api_view, permission_classes
 from .api import get_сonvert
@@ -33,10 +33,12 @@ import io
 from django.db.models import Count
 from datetime import timedelta
 from django.utils.timezone import make_aware
+from accounts.models import CheckingAccount, SavingsAccount, CreditAccount, SocialAccount
+from .serializers import TransactionSerializer
 
 
 class AllClientsTransactionStats(APIView):
-    permission_classes = [IsAuthenticated,IsAnalyst]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
@@ -185,6 +187,8 @@ class TransactionsByDateRangeAPIView(APIView):
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
 class TransactionListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
@@ -200,18 +204,89 @@ class TransactionListCreateAPIView(generics.ListCreateAPIView):
         if end_date:
             end_date = parse_date(end_date)
             queryset = queryset.filter(transaction_time__date__lte=end_date)
-            
+
         return queryset
-    
-    
+
+    def perform_create(self, serializer):
+        sender_account = serializer.validated_data.get('sender_account')
+        amount = serializer.validated_data.get('amount')
+        transaction_type = serializer.validated_data.get('transaction_type')
+
+        if transaction_type in ['withdrawal', 'transfer']:
+            account = self.get_account_type(sender_account)
+            available_balance = account.account_balance
+
+            if isinstance(account, CheckingAccount):
+                available_balance += account.overdraft_limit
+                if amount > available_balance:
+                    raise serializers.ValidationError({'error': 'Недостаточно средств для выполнения операции.'})
+            elif isinstance(account, CreditAccount):
+                available_balance += account.credit_limit
+                if amount > available_balance:
+                    raise serializers.ValidationError({'error': 'Недостаточно средств для выполнения операции.'})
+            else:
+                if amount > available_balance:
+                    raise serializers.ValidationError({'error': 'Недостаточно средств для выполнения операции.'})
+
+        serializer.save()
+
+    def get_account_type(self, account):
+        try:
+            return CheckingAccount.objects.get(pk=account.pk)
+        except CheckingAccount.DoesNotExist:
+            pass
+
+        try:
+            return SavingsAccount.objects.get(pk=account.pk)
+        except SavingsAccount.DoesNotExist:
+            pass
+
+        try:
+            return CreditAccount.objects.get(pk=account.pk)
+        except CreditAccount.DoesNotExist:
+            pass
+
+        try:
+            return SocialAccount.objects.get(pk=account.pk)
+        except SocialAccount.DoesNotExist:
+            pass
+
+        raise ValueError('Unknown account type')
 
 class AccountTransactionsAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TransactionSerializer
 
     def get_queryset(self):
         account_num = self.kwargs['account_num']  
         return Transaction.objects.filter(sender_account__account_num=account_num) | \
                Transaction.objects.filter(recipient_account__account_num=account_num)
+
+    def get_account_type(self, account):
+        try:
+            return CheckingAccount.objects.get(pk=account.pk)
+        except CheckingAccount.DoesNotExist:
+            pass
+
+        try:
+            return SavingsAccount.objects.get(pk=account.pk)
+        except SavingsAccount.DoesNotExist:
+            pass
+
+        try:
+            return CreditAccount.objects.get(pk=account.pk)
+        except CreditAccount.DoesNotExist:
+            pass
+
+        try:
+            return SocialAccount.objects.get(pk=account.pk)
+        except SocialAccount.DoesNotExist:
+            pass
+
+        raise ValueError('Unknown account type')
+
+    
+    
 
 
 @permission_classes([IsAuthenticated,IsAnalyst])
@@ -267,15 +342,15 @@ def generate_pdf(request):
         if transaction.transaction_type in ['withdrawal', 'transfer'] and transaction.sender_account:
             total_withdrawals += amount_in_byn
 
-    elements.append(Paragraph(f"Max transaction: {max_transaction}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph(f"Max transaction: {max_transaction} BYN", getSampleStyleSheet()['Normal']))
     elements.append(Paragraph("<br/>"))  
-    elements.append(Paragraph(f"Min transaction: {min_transaction}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph(f"Min transaction: {min_transaction} BYN", getSampleStyleSheet()['Normal']))
     elements.append(Paragraph("<br/>"))  
-    elements.append(Paragraph(f"Total sum of transactions: {total_amount}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph(f"Total sum of transactions: {total_amount} BYN", getSampleStyleSheet()['Normal']))
     elements.append(Paragraph("<br/>"))  
-    elements.append(Paragraph(f"Total sum of deposits: {total_deposits}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph(f"Total sum of deposits: {total_deposits} BYN", getSampleStyleSheet()['Normal']))
     elements.append(Paragraph("<br/>"))  
-    elements.append(Paragraph(f"Total sum of withdrawals: {total_withdrawals}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph(f"Total sum of withdrawals: {total_withdrawals} BYN", getSampleStyleSheet()['Normal']))
     elements.append(Paragraph("<br/>"))  
     elements.append(Paragraph(f"Total count of transactions: {count}", getSampleStyleSheet()['Normal']))
     elements.append(Paragraph("<br/>"))  
@@ -328,6 +403,106 @@ def generate_pdf(request):
     response.write(buffer.getvalue())
     buffer.close()
     return response
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated,IsClient])
+def generate_pdf_client(request):
+    account_num = request.GET.get('account')
+    month = request.GET.get('month')
+
+    try:
+        account = Account.objects.get(account_num=account_num)
+    except Account.DoesNotExist:
+        return HttpResponse("Account not found", status=404)
+    
+    transactions = Transaction.objects.filter(
+        sender_account=account, transaction_time__month=month
+    ) | Transaction.objects.filter(
+        recipient_account=account, transaction_time__month=month
+    )
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+
+    elements.append(Paragraph("Transaction Report", getSampleStyleSheet()['Title']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Date of report: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Account num: {account_num}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Month: {month}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+
+    max_transaction = 0
+    min_transaction = float('inf')
+    total_amount = 0
+    total_deposits = 0
+    total_withdrawals = 0
+    count = 0
+
+    for transaction in transactions:
+        amount_in_byn = transaction.convert_amount_to(transaction.amount, transaction.currency, "BYN")
+
+        if amount_in_byn > max_transaction:
+            max_transaction = amount_in_byn
+        if amount_in_byn < min_transaction:
+            min_transaction = amount_in_byn
+        total_amount += amount_in_byn
+        count += 1
+        
+        if transaction.transaction_type in ['deposit', 'transfer'] and transaction.recipient_account:
+            total_deposits += amount_in_byn
+        if transaction.transaction_type in ['withdrawal', 'transfer'] and transaction.sender_account:
+            total_withdrawals += amount_in_byn
+
+    elements.append(Paragraph(f"Max transaction: {max_transaction} BYN", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Min transaction: {min_transaction} BYN", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total sum of transactions: {total_amount} BYN", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total sum of incomes: {total_deposits} BYN", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total sum of outcomes: {total_withdrawals} BYN", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+    elements.append(Paragraph(f"Total count of transactions: {count}", getSampleStyleSheet()['Normal']))
+    elements.append(Paragraph("<br/>"))  
+
+    data = [["ID","Sum", "Currency","Date", "Type"]]
+    for transaction in transactions:
+        data.append([
+            transaction.id,
+            transaction.amount,
+            transaction.currency,
+            transaction.transaction_time.strftime("%Y-%m-%d %H:%M:%S"),
+            transaction.transaction_type
+        ])
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.red),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(table)
+
+    doc.build(elements)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="user_report_{account_num}_{month}.pdf"'
+    response.write(buffer.getvalue())
+    buffer.close()
+    return response
+
+
+
+
+
+
 
 @permission_classes([IsAuthenticated])
 def generate_chart_data(transactions):

@@ -39,14 +39,14 @@ const SignUp = () => {
 
   const handleSubmit = async () => {
     if (!validateEmail(email)) {
-      setEmailError('Invalid email format');
+      setEmailError('Неверный формат email');
       return;
     } else {
       setEmailError('');
     }
 
     if (!validatePassword(password)) {
-      setPasswordError('Password must be at least 8 characters with one uppercase, one lowercase, and one number');
+      setPasswordError('Пароль должен состоять минимум из 8 символов, одной большой и маленькой буквы латинского алфавита');
       return;
     } else {
       setPasswordError('');
@@ -55,7 +55,7 @@ const SignUp = () => {
     try {
       const emailCheckResponse = await axios.get(`http://localhost:8000/api/check-email?email=${email}`, {withCredentials: true});
       if (emailCheckResponse.data.exists) {
-        setEmailError('This email is already registered');
+        setEmailError('Этот email уже зарегистрирован');
         return;
       }
 

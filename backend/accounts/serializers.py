@@ -10,33 +10,33 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class CheckingAccountSerializer(serializers.ModelSerializer):
-    account_type = serializers.SerializerMethodField()  # Add account_type here
+    account_type = serializers.SerializerMethodField() 
     class Meta:
         model = CheckingAccount
         fields = ['account_num', 'client_id', 'currency','account_balance', 'open_date', 'account_activity', 'overdraft_limit', 'account_type'] # Include account_type
     def get_account_type(self, obj):
-        return obj.__class__.__name__  # Return the specific class name
+        return obj.__class__.__name__ 
 
 class SavingsAccountSerializer(serializers.ModelSerializer):
-    account_type = serializers.SerializerMethodField()  # Add account_type here
+    account_type = serializers.SerializerMethodField() 
     class Meta:
         model = SavingsAccount
         fields = ['account_num', 'client_id', 'currency' , 'account_balance', 'open_date', 'account_activity', 'interest_rate', 'account_type'] # Include account_type
     def get_account_type(self, obj):
-        return obj.__class__.__name__  # Return the specific class name
+        return obj.__class__.__name__  
 
 class CreditAccountSerializer(serializers.ModelSerializer):
-    account_type = serializers.SerializerMethodField()  # Add account_type here
+    account_type = serializers.SerializerMethodField()  
     class Meta:
         model = CreditAccount
         fields = ['account_num', 'client_id', 'currency', 'account_balance', 'open_date', 'account_activity', 'credit_limit', 'account_type'] # Include account_type
     def get_account_type(self, obj):
-        return obj.__class__.__name__  # Return the specific class name
+        return obj.__class__.__name__  
 
 class SocialAccountSerializer(serializers.ModelSerializer):
-    account_type = serializers.SerializerMethodField()  # Add account_type here
+    account_type = serializers.SerializerMethodField()  
     class Meta:
         model = SocialAccount
         fields = ['account_num', 'client_id', 'currency', 'account_balance', 'open_date', 'account_activity', 'social_payments', 'account_type'] # Include account_type
     def get_account_type(self, obj):
-        return obj.__class__.__name__  # Return the specific class name
+        return obj.__class__.__name__  

@@ -6,6 +6,7 @@ urlpatterns = [
     path('<int:account_num>/', views.AccountTransactionsAPIView.as_view(), name='account_transactions'),
     path('date-range/', views.TransactionsByDateRangeAPIView.as_view(), name='transaction-by-date-range'),
     path('generate-pdf/', views.generate_pdf, name='generate_pdf'),
+    path('generate-pdf-client/', views.generate_pdf_client, name='generate_pdf'),
     path('receipt/<int:transaction_id>/', views.TransactionReceiptView.as_view(), name='transaction-receipt'),
     path('receipts/', views.ListReceiptsView.as_view(), name='list-receipts'),
     path('boxplot/', views.boxplot_data, name='boxplot_data'),

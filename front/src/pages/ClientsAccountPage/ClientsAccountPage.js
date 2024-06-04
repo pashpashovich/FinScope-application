@@ -112,7 +112,7 @@ const ClientAccountsPage = () => {
     account_num: "",
     account_type: "",
     account_balance: "",
-    currency: " ",
+    currency: "",
     open_date: new Date().toISOString().slice(0, 10),
     account_activity: true,
     overdraft_limit: "",
@@ -120,7 +120,6 @@ const ClientAccountsPage = () => {
     credit_limit: "",
     social_benefit_type: "",
   });
-  const [selectedCurrency, setSelectedCurrency] = useState("BYN");
   const [errorText, setErrorText] = useState("");
   const navigate = useNavigate();
 
@@ -210,7 +209,30 @@ const ClientAccountsPage = () => {
       .catch((error) => setErrorText(error.message));
   };
 
+  const validateForm = () => {
+    const {
+      account_num,
+      account_type,
+      account_balance,
+      currency,
+    } = newAccountData;
+    if (!account_num || !account_type || !account_balance || !currency) {
+      return false;
+    }
+    if (isNaN(account_balance)) {
+      return false;
+    }
+    if (errorText) {
+      return false;
+    }
+    return true;
+  };
+
   const handleAddAccount = () => {
+    if (!validateForm()) {
+      return;
+    }
+
     const {
       account_num,
       account_type,
@@ -221,6 +243,7 @@ const ClientAccountsPage = () => {
       credit_limit,
       social_benefit_type,
     } = newAccountData;
+
     fetch("http://localhost:8000/accounts/", {
       method: "POST",
       headers: {
@@ -325,10 +348,6 @@ const ClientAccountsPage = () => {
       default:
         return null;
     }
-  };
-
-  const handleCurrencyChange = (event) => {
-    setSelectedCurrency(event.target.value);
   };
 
   const handleLogout = () => {
@@ -477,6 +496,8 @@ const ClientAccountsPage = () => {
               onChange={handleInputChange}
               variant="outlined"
               margin="normal"
+              error={isNaN(newAccountData.account_balance)}
+              helperText={isNaN(newAccountData.account_balance) ? "Введите числовое значение" : ""}
               fullWidth
             />
             <FormControl variant="outlined" margin="normal" fullWidth>
@@ -501,6 +522,7 @@ const ClientAccountsPage = () => {
                 variant="contained"
                 color="primary"
                 style={{ marginTop: 20 }}
+                disabled={!validateForm()}
               >
                 Добавить счет
               </MyButton>
